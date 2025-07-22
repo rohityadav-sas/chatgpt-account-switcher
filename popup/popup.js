@@ -30,12 +30,10 @@ class ChatGPTSwitcher {
 	}
 
 	attachEventListeners() {
-		// Account list event delegation
 		this.elements.accountList.addEventListener('click', (e) => {
 			this.handleAccountAction(e);
 		});
 
-		// Main actions
 		this.elements.addAccountBtn.addEventListener('click', () => {
 			this.addNewAccount();
 		});
@@ -60,7 +58,6 @@ class ChatGPTSwitcher {
 			this.loadAccounts();
 		});
 
-		// Confirmation dialog events
 		this.elements.confirmationCancel.addEventListener('click', () => {
 			this.hideConfirmation();
 		});
@@ -72,7 +69,6 @@ class ChatGPTSwitcher {
 			}
 		});
 
-		// Close confirmation on overlay click
 		this.elements.confirmationOverlay.addEventListener('click', (e) => {
 			if (e.target === this.elements.confirmationOverlay) {
 				this.hideConfirmation();
@@ -107,7 +103,6 @@ class ChatGPTSwitcher {
 			const email = account.username;
 			const avatar = account.avatar || username.charAt(0).toUpperCase();
 
-			// Create avatar HTML - use profile picture if available, otherwise show initials
 			const avatarHTML = account.avatar ? 
 				`<img class="account-avatar-img" src="${account.avatar}" alt="${username}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
 				 <div class="account-avatar-fallback" style="display: none;">${username.charAt(0).toUpperCase()}</div>` :
@@ -147,10 +142,8 @@ class ChatGPTSwitcher {
 		const index = parseInt(accountElement.dataset.index);
 		
 		if (deleteBtn) {
-			// If delete button was clicked, delete the account
 			await this.deleteAccount(index);
 		} else {
-			// If anywhere else on the account was clicked, switch to it
 			await this.switchAccount(index);
 		}
 	}
@@ -190,7 +183,6 @@ class ChatGPTSwitcher {
 	}
 
 	async getCurrentAccountInfo() {
-		// Get current tab
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 		const activeTab = tabs[0];
 		
@@ -200,7 +192,6 @@ class ChatGPTSwitcher {
 			throw new Error('Please navigate to ChatGPT first');
 		}
 
-		// Get username from content script
 		const username = await new Promise((resolve) => {
 			chrome.tabs.sendMessage(
 				activeTab.id, 
@@ -211,7 +202,6 @@ class ChatGPTSwitcher {
 			);
 		});
 
-		// Get avatar URL from content script
 		const avatar = await new Promise((resolve) => {
 			chrome.tabs.sendMessage(
 				activeTab.id,
@@ -222,7 +212,6 @@ class ChatGPTSwitcher {
 			);
 		});
 
-		// Get session token from cookies
 		const cookies = await chrome.cookies.getAll({ domain: '.chatgpt.com' });
 		const sessionCookie = cookies.find(
 			cookie => cookie.name === '__Secure-next-auth.session-token'
@@ -308,7 +297,6 @@ class ChatGPTSwitcher {
 
 			const accountCount = this.accounts.length;
 			
-			// Show custom confirmation dialog
 			this.showConfirmation(
 				`Clear All Accounts`,
 				`Are you sure you want to clear all ${accountCount} account${accountCount > 1 ? 's' : ''}? This action cannot be undone.`,
@@ -366,14 +354,12 @@ class ChatGPTSwitcher {
 
 			showLoading();
 
-			// Create export data
 			const exportData = this.accounts.map(account => ({
 				username: account.username,
 				avatar: account.avatar || null,
 				sessionToken: account.sessionToken
 			}));
 
-			// Create and download file
 			const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
 				type: 'application/json' 
 			});
@@ -400,14 +386,12 @@ class ChatGPTSwitcher {
 		if (!file) return;
 
 		try {
-			// Validate file type
 			if (!file.name.toLowerCase().endsWith('.json')) {
 				showNotification('Please select a JSON file', 'error');
 				return;
 			}
 
-			// Validate file size (max 5MB)
-			const maxSize = 5 * 1024 * 1024; // 5MB
+			const maxSize = 5 * 1024 * 1024;
 			if (file.size > maxSize) {
 				showNotification('File is too large. Maximum size is 5MB', 'error');
 				return;
@@ -415,20 +399,15 @@ class ChatGPTSwitcher {
 
 			showLoading();
 
-			// Read file
 			const fileContent = await this.readFile(file);
 			
-			// Parse and validate JSON
 			const importedAccounts = await this.validateImportData(fileContent);
 
-			// Ask user for import mode
 			const importMode = await this.showImportDialog(importedAccounts.length);
-			if (!importMode) return; // User cancelled
+			if (!importMode) return;
 
-			// Perform import
 			const result = await this.performImport(importedAccounts, importMode);
 
-			// Show success message and reload accounts
 			const message = importMode === 'merge' 
 				? `Successfully imported ${result.imported} accounts (${result.updated} updated, ${result.added} added)`
 				: `Successfully imported ${result.imported} accounts`;
@@ -441,7 +420,6 @@ class ChatGPTSwitcher {
 			showNotification(`Import failed: ${error.message}`, 'error');
 		} finally {
 			hideLoading();
-			// Reset file input
 			this.elements.importFileInput.value = '';
 		}
 	}
@@ -493,7 +471,6 @@ class ChatGPTSwitcher {
 				return;
 			}
 
-			// Validate email format
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 			if (!emailRegex.test(account.username)) {
 				errors.push(`Account ${index + 1}: Invalid email format`);
@@ -523,17 +500,14 @@ class ChatGPTSwitcher {
 			const existingCount = this.accounts.length;
 			
 			if (existingCount > 0) {
-				// Show merge/replace options
 				this.showImportOptionsDialog(accountCount, existingCount, resolve);
 			} else {
-				// No existing accounts, show import confirmation with import icon
 				this.showImportConfirmationDialog(accountCount, resolve);
 			}
 		});
 	}
 
 	showImportConfirmationDialog(accountCount, resolve) {
-		// Create a temporary import dialog overlay
 		const importOverlay = document.createElement('div');
 		importOverlay.className = 'confirmation-overlay show';
 		importOverlay.innerHTML = `
@@ -558,10 +532,8 @@ class ChatGPTSwitcher {
 			</div>
 		`;
 		
-		// Add to body
 		document.body.appendChild(importOverlay);
 		
-		// Add event listeners
 		const handleChoice = (choice) => {
 			importOverlay.remove();
 			resolve(choice);
@@ -570,7 +542,6 @@ class ChatGPTSwitcher {
 		importOverlay.querySelector('#importConfirmCancel').addEventListener('click', () => handleChoice(null));
 		importOverlay.querySelector('#importConfirmOk').addEventListener('click', () => handleChoice('replace'));
 		
-		// Close on overlay click
 		importOverlay.addEventListener('click', (e) => {
 			if (e.target === importOverlay) {
 				handleChoice(null);
@@ -579,7 +550,6 @@ class ChatGPTSwitcher {
 	}
 
 	showImportOptionsDialog(accountCount, existingCount, resolve) {
-		// Create a temporary import dialog overlay
 		const importOverlay = document.createElement('div');
 		importOverlay.className = 'confirmation-overlay show';
 		importOverlay.innerHTML = `
@@ -605,10 +575,8 @@ class ChatGPTSwitcher {
 			</div>
 		`;
 		
-		// Add to body
 		document.body.appendChild(importOverlay);
 		
-		// Add event listeners
 		const handleChoice = (choice) => {
 			importOverlay.remove();
 			resolve(choice);
@@ -618,7 +586,6 @@ class ChatGPTSwitcher {
 		importOverlay.querySelector('#importMerge').addEventListener('click', () => handleChoice('merge'));
 		importOverlay.querySelector('#importReplace').addEventListener('click', () => handleChoice('replace'));
 		
-		// Close on overlay click
 		importOverlay.addEventListener('click', (e) => {
 			if (e.target === importOverlay) {
 				handleChoice(null);
@@ -629,7 +596,6 @@ class ChatGPTSwitcher {
 	async performImport(newAccounts, mode) {
 		try {
 			if (mode === 'replace') {
-				// Replace all accounts
 				this.accounts = newAccounts;
 				await saveAccounts(this.accounts);
 				
@@ -639,17 +605,14 @@ class ChatGPTSwitcher {
 					updated: 0
 				};
 			} else {
-				// Merge with existing accounts
 				const accountMap = new Map();
 				let updated = 0;
 				let added = 0;
 
-				// Add existing accounts to map
 				this.accounts.forEach(account => {
 					accountMap.set(account.username, account);
 				});
 
-				// Add/update with new accounts
 				newAccounts.forEach(account => {
 					if (accountMap.has(account.username)) {
 						updated++;
@@ -673,7 +636,6 @@ class ChatGPTSwitcher {
 		}
 	}
 
-	// Custom confirmation dialog methods
 	showConfirmation(title, message, onConfirm) {
 		this.elements.confirmationTitle.textContent = title;
 		this.elements.confirmationMessage.textContent = message;
@@ -687,7 +649,6 @@ class ChatGPTSwitcher {
 	}
 }
 
-// Initialize the popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
 	new ChatGPTSwitcher();
 });

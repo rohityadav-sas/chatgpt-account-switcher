@@ -1,9 +1,3 @@
-/**
- * Storage Utility Functions
- * Handles Chrome extension storage operations with error handling and validation
- */
-
-// Account interface for type checking
 const validateAccount = (account) => {
 	return account && 
 		   typeof account.username === 'string' && 
@@ -12,10 +6,6 @@ const validateAccount = (account) => {
 		   account.sessionToken.length > 0;
 };
 
-/**
- * Get stored accounts from Chrome storage
- * @returns {Promise<Array>} Array of account objects
- */
 export const getStoredAccounts = async () => {
 	return new Promise((resolve, reject) => {
 		try {
@@ -27,10 +17,8 @@ export const getStoredAccounts = async () => {
 
 				const accounts = data.accounts || [];
 				
-				// Validate and filter accounts
 				const validAccounts = accounts.filter(validateAccount);
 				
-				// If we filtered out invalid accounts, save the clean list
 				if (validAccounts.length !== accounts.length) {
 					console.warn('Removed invalid accounts from storage');
 					saveAccounts(validAccounts);
@@ -44,16 +32,9 @@ export const getStoredAccounts = async () => {
 	});
 };
 
-/**
- * Save accounts to Chrome storage
- * @param {Array} accounts - Array of account objects
- * @param {Function} callback - Optional callback function
- * @returns {Promise<void>}
- */
 export const saveAccounts = async (accounts, callback) => {
 	return new Promise((resolve, reject) => {
 		try {
-			// Validate all accounts before saving
 			const validAccounts = accounts.filter(validateAccount);
 			
 			if (validAccounts.length !== accounts.length) {
@@ -78,11 +59,6 @@ export const saveAccounts = async (accounts, callback) => {
 	});
 };
 
-/**
- * Add a new account or update existing one
- * @param {Object} newAccount - Account object to add/update
- * @returns {Promise<boolean>} True if account was added, false if updated
- */
 export const addOrUpdateAccount = async (newAccount) => {
 	if (!validateAccount(newAccount)) {
 		throw new Error('Invalid account data');
@@ -94,23 +70,16 @@ export const addOrUpdateAccount = async (newAccount) => {
 	);
 
 	if (existingIndex !== -1) {
-		// Update existing account
 		accounts[existingIndex] = { ...accounts[existingIndex], ...newAccount };
 		await saveAccounts(accounts);
-		return false; // Updated
+		return false;
 	} else {
-		// Add new account
 		accounts.push(newAccount);
 		await saveAccounts(accounts);
-		return true; // Added
+		return true;
 	}
 };
 
-/**
- * Remove an account by username
- * @param {string} username - Username to remove
- * @returns {Promise<boolean>} True if account was removed
- */
 export const removeAccount = async (username) => {
 	const accounts = await getStoredAccounts();
 	const initialLength = accounts.length;
@@ -127,11 +96,6 @@ export const removeAccount = async (username) => {
 	return false;
 };
 
-/**
- * Remove account by index
- * @param {number} index - Index of account to remove
- * @returns {Promise<boolean>} True if account was removed
- */
 export const removeAccountByIndex = async (index) => {
 	const accounts = await getStoredAccounts();
 	
@@ -144,55 +108,32 @@ export const removeAccountByIndex = async (index) => {
 	return false;
 };
 
-/**
- * Get account by username
- * @param {string} username - Username to find
- * @returns {Promise<Object|null>} Account object or null if not found
- */
 export const getAccountByUsername = async (username) => {
 	const accounts = await getStoredAccounts();
 	return accounts.find(account => account.username === username) || null;
 };
 
-/**
- * Clear all accounts
- * @returns {Promise<void>}
- */
 export const clearAllAccounts = async () => {
 	await saveAccounts([]);
 };
 
-/**
- * Get storage usage statistics
- * @returns {Promise<Object>} Storage usage info
- */
 export const getStorageInfo = async () => {
 	return new Promise((resolve) => {
 		chrome.storage.local.getBytesInUse('accounts', (bytesInUse) => {
 			resolve({
 				bytesInUse,
-				maxBytes: chrome.storage.local.QUOTA_BYTES || 5242880, // 5MB default
+				maxBytes: chrome.storage.local.QUOTA_BYTES || 5242880,
 				percentUsed: ((bytesInUse / (chrome.storage.local.QUOTA_BYTES || 5242880)) * 100).toFixed(2)
 			});
 		});
 	});
 };
 
-/**
- * Export accounts to JSON string
- * @returns {Promise<string>} JSON string of accounts
- */
 export const exportAccounts = async () => {
 	const accounts = await getStoredAccounts();
 	return JSON.stringify(accounts, null, 2);
 };
 
-/**
- * Import accounts from JSON string
- * @param {string} jsonString - JSON string of accounts
- * @param {boolean} merge - Whether to merge with existing accounts
- * @returns {Promise<number>} Number of accounts imported
- */
 export const importAccounts = async (jsonString, merge = false) => {
 	try {
 		const importedAccounts = JSON.parse(jsonString);
@@ -213,12 +154,10 @@ export const importAccounts = async (jsonString, merge = false) => {
 			const existingAccounts = await getStoredAccounts();
 			const accountMap = new Map();
 
-			// Add existing accounts
 			existingAccounts.forEach(account => {
 				accountMap.set(account.username, account);
 			});
 
-			// Add/update with imported accounts
 			validAccounts.forEach(account => {
 				accountMap.set(account.username, account);
 			});

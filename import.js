@@ -1,8 +1,3 @@
-/**
- * Import Page Script for ChatGPT Switcher
- * Handles file drag & drop, validation, and account importing
- */
-
 class ImportManager {
 	constructor() {
 		this.elements = {
@@ -27,22 +22,18 @@ class ImportManager {
 	}
 
 	setupEventListeners() {
-		// File input change
 		this.elements.fileInput.addEventListener('change', (e) => {
 			this.handleFileSelect(e.target.files[0]);
 		});
 
-		// Import button
 		this.elements.importBtn.addEventListener('click', () => {
 			this.importAccounts();
 		});
 
-		// Cancel button
 		this.elements.cancelBtn.addEventListener('click', () => {
 			this.closeWindow();
 		});
 
-		// Click on drop area to open file dialog
 		this.elements.dropArea.addEventListener('click', (e) => {
 			if (e.target !== this.elements.fileInput && !e.target.closest('.file-input-wrapper')) {
 				this.elements.fileInput.click();
@@ -86,14 +77,12 @@ class ImportManager {
 	handleFileSelect(file) {
 		if (!file) return;
 
-		// Validate file type
 		if (!file.name.toLowerCase().endsWith('.json')) {
 			this.showMessage('Please select a JSON file.', 'error');
 			return;
 		}
 
-		// Validate file size (max 5MB)
-		const maxSize = 5 * 1024 * 1024; // 5MB
+		const maxSize = 5 * 1024 * 1024;
 		if (file.size > maxSize) {
 			this.showMessage('File is too large. Maximum size is 5MB.', 'error');
 			return;
@@ -117,29 +106,23 @@ class ImportManager {
 			this.setImportingState(true);
 			this.showProgress(0);
 
-			// Read file
 			const fileContent = await this.readFile(this.selectedFile);
 			this.showProgress(25);
 
-			// Parse and validate JSON
 			const accounts = this.validateAccountsData(fileContent);
 			this.showProgress(50);
 
-			// Get import mode
 			const importMode = document.querySelector('input[name="importMode"]:checked').value;
 			
-			// Import accounts
 			const result = await this.performImport(accounts, importMode);
 			this.showProgress(100);
 
-			// Show success message
 			const message = importMode === 'merge' 
 				? `Successfully imported ${result.imported} accounts (${result.updated} updated, ${result.added} added)`
 				: `Successfully imported ${result.imported} accounts`;
 			
 			this.showMessage(message, 'success');
 
-			// Auto-close after success
 			setTimeout(() => {
 				this.closeWindow();
 			}, 3000);
@@ -205,7 +188,6 @@ class ImportManager {
 				return;
 			}
 
-			// Validate email format
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 			if (!emailRegex.test(account.username)) {
 				errors.push(`Account ${index + 1}: Invalid email format`);
@@ -246,7 +228,6 @@ class ImportManager {
 					}
 				});
 			} else {
-				// Merge with existing accounts
 				chrome.storage.local.get('accounts', (data) => {
 					if (chrome.runtime.lastError) {
 						reject(new Error(chrome.runtime.lastError.message));
@@ -258,12 +239,10 @@ class ImportManager {
 					let updated = 0;
 					let added = 0;
 
-					// Add existing accounts to map
 					existingAccounts.forEach(account => {
 						accountMap.set(account.username, account);
 					});
 
-					// Add/update with new accounts
 					newAccounts.forEach(account => {
 						if (accountMap.has(account.username)) {
 							updated++;
@@ -342,7 +321,6 @@ class ImportManager {
 	}
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
 	new ImportManager();
 });

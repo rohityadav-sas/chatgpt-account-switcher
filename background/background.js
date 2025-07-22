@@ -1,8 +1,3 @@
-/**
- * Background Script for ChatGPT Switcher
- * Handles context menus, cookie operations, and extension lifecycle events
- */
-
 class ChatGPTSwitcherBackground {
 	constructor() {
 		this.init();
@@ -13,18 +8,15 @@ class ChatGPTSwitcherBackground {
 	}
 
 	setupEventListeners() {
-		// Extension installation/update
 		chrome.runtime.onInstalled.addListener((details) => {
 			this.handleInstallation(details);
 		});
 
-		// Runtime messages
 		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			this.handleMessage(message, sender, sendResponse);
-			return true; // Keep message channel open for async responses
+			return true;
 		});
 
-		// Tab updates (for better navigation handling)
 		chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 			this.handleTabUpdate(tabId, changeInfo, tab);
 		});
@@ -59,9 +51,7 @@ class ChatGPTSwitcherBackground {
 	}
 
 	handleTabUpdate(tabId, changeInfo, tab) {
-		// Could be used for future features like auto-detection of account switches
 		if (changeInfo.status === 'complete' && tab.url?.includes('chatgpt.com')) {
-			// Tab finished loading ChatGPT
 			console.log('ChatGPT tab loaded:', tabId);
 		}
 	}
@@ -74,7 +64,6 @@ class ChatGPTSwitcherBackground {
 				throw new Error('No session token provided');
 			}
 
-			// Set the session cookie
 			await this.setCookie({
 				url: 'https://chatgpt.com',
 				name: '__Secure-next-auth.session-token',
@@ -85,7 +74,6 @@ class ChatGPTSwitcherBackground {
 				sameSite: 'no_restriction'
 			});
 
-			// Navigate to ChatGPT
 			await this.navigateToChatGPT();
 
 			console.log('Successfully switched to account:', username);
@@ -125,13 +113,10 @@ class ChatGPTSwitcherBackground {
 		const currentTab = tabs[0];
 
 		if (currentTab?.url?.includes('chatgpt.com')) {
-			// Refresh current ChatGPT tab
 			await chrome.tabs.reload(currentTab.id);
 		} else if (currentTab?.url?.includes('newtab') || currentTab?.url?.startsWith('chrome://')) {
-			// Replace new tab or chrome page with ChatGPT
 			await chrome.tabs.update(currentTab.id, { url: 'https://chatgpt.com' });
 		} else {
-			// Create new ChatGPT tab
 			await chrome.tabs.create({ url: 'https://chatgpt.com' });
 		}
 	}
@@ -173,5 +158,4 @@ class ChatGPTSwitcherBackground {
 	}
 }
 
-// Initialize the background script
 const chatGPTSwitcherBackground = new ChatGPTSwitcherBackground();

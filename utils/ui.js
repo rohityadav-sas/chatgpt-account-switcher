@@ -1,9 +1,3 @@
-/**
- * UI Utility Functions
- * Handles loading states, notifications, and other UI interactions
- */
-
-// Loading overlay management
 export function showLoading() {
 	const overlay = document.getElementById('loadingOverlay');
 	if (overlay) {
@@ -18,23 +12,19 @@ export function hideLoading() {
 	}
 }
 
-// Notification system
 let notificationTimeout;
 
 export function showNotification(message, type = 'info', duration = 3000) {
-	// Clear any existing notification
 	clearNotification();
 
 	const notification = document.createElement('div');
 	notification.className = `${type}-message`;
 	notification.id = 'notification';
 
-	// Create notification content
 	const messageSpan = document.createElement('span');
 	messageSpan.textContent = message;
 	messageSpan.className = 'notification-message';
 
-	// Create close button
 	const closeButton = document.createElement('button');
 	closeButton.className = 'notification-close';
 	closeButton.innerHTML = `
@@ -44,17 +34,14 @@ export function showNotification(message, type = 'info', duration = 3000) {
 	`;
 	closeButton.title = 'Close notification';
 	
-	// Add click handler for close button
 	closeButton.addEventListener('click', () => {
 		clearNotification();
 	});
 
-	// Append elements
 	notification.appendChild(messageSpan);
 	notification.appendChild(closeButton);
 	document.body.appendChild(notification);
 
-	// Auto-remove after duration
 	notificationTimeout = setTimeout(() => {
 		clearNotification();
 	}, duration);
@@ -72,7 +59,6 @@ function clearNotification() {
 	}
 }
 
-// Animation utilities
 export function addAnimation(element, animationClass, duration = 300) {
 	return new Promise((resolve) => {
 		element.classList.add(animationClass);
@@ -84,7 +70,6 @@ export function addAnimation(element, animationClass, duration = 300) {
 	});
 }
 
-// Theme management (for future use)
 export function setTheme(theme) {
 	document.documentElement.setAttribute('data-theme', theme);
 	localStorage.setItem('chatgpt-switcher-theme', theme);
@@ -94,7 +79,6 @@ export function getTheme() {
 	return localStorage.getItem('chatgpt-switcher-theme') || 'dark';
 }
 
-// Accessibility utilities
 export function announceToScreenReader(message) {
 	const announcement = document.createElement('div');
 	announcement.setAttribute('aria-live', 'polite');
@@ -109,13 +93,11 @@ export function announceToScreenReader(message) {
 	}, 1000);
 }
 
-// Form validation utilities
 export function validateEmail(email) {
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	return emailRegex.test(email);
 }
 
-// Copy to clipboard utility
 export async function copyToClipboard(text) {
 	try {
 		await navigator.clipboard.writeText(text);
