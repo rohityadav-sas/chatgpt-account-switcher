@@ -1,115 +1,124 @@
-import { getStoredAccounts, saveAccounts } from '../utils/storage.js';
-import { showNotification, showLoading, hideLoading } from '../utils/ui.js';
+import { getStoredAccounts, saveAccounts } from "../utils/storage.js"
+import { showNotification, showLoading, hideLoading } from "../utils/ui.js"
 
 class ChatGPTSwitcher {
 	constructor() {
 		this.elements = {
-			accountList: document.getElementById('accountList'),
-			addAccountBtn: document.getElementById('addAccountBtn'),
-			exportBtn: document.getElementById('exportBtn'),
-			importBtn: document.getElementById('importBtn'),
-			importFileInput: document.getElementById('importFileInput'),
-			clearAllBtn: document.getElementById('clearAllBtn'),
-			refreshBtn: document.getElementById('refreshBtn'),
-			accountCount: document.getElementById('accountCount'),
-			emptyState: document.getElementById('emptyState'),
-			confirmationOverlay: document.getElementById('confirmationOverlay'),
-			confirmationTitle: document.getElementById('confirmationTitle'),
-			confirmationMessage: document.getElementById('confirmationMessage'),
-			confirmationCancel: document.getElementById('confirmationCancel'),
-			confirmationConfirm: document.getElementById('confirmationConfirm')
-		};
-		
-		this.accounts = [];
-		this.init();
+			accountList: document.getElementById("accountList"),
+			addAccountBtn: document.getElementById("addAccountBtn"),
+			exportBtn: document.getElementById("exportBtn"),
+			importBtn: document.getElementById("importBtn"),
+			importFileInput: document.getElementById("importFileInput"),
+			clearAllBtn: document.getElementById("clearAllBtn"),
+			refreshBtn: document.getElementById("refreshBtn"),
+			accountCount: document.getElementById("accountCount"),
+			emptyState: document.getElementById("emptyState"),
+			confirmationOverlay: document.getElementById("confirmationOverlay"),
+			confirmationTitle: document.getElementById("confirmationTitle"),
+			confirmationMessage: document.getElementById("confirmationMessage"),
+			confirmationCancel: document.getElementById("confirmationCancel"),
+			confirmationConfirm: document.getElementById("confirmationConfirm"),
+		}
+
+		this.accounts = []
+		this.init()
 	}
 
 	async init() {
-		this.attachEventListeners();
-		await this.loadAccounts();
+		this.attachEventListeners()
+		await this.loadAccounts()
 	}
 
 	attachEventListeners() {
-		this.elements.accountList.addEventListener('click', (e) => {
-			this.handleAccountAction(e);
-		});
+		this.elements.accountList.addEventListener("click", (e) => {
+			this.handleAccountAction(e)
+		})
 
-		this.elements.addAccountBtn.addEventListener('click', () => {
-			this.addNewAccount();
-		});
+		this.elements.addAccountBtn.addEventListener("click", () => {
+			this.addNewAccount()
+		})
 
-		this.elements.exportBtn.addEventListener('click', () => {
-			this.exportAccounts();
-		});
+		this.elements.exportBtn.addEventListener("click", () => {
+			this.exportAccounts()
+		})
 
-		this.elements.importBtn.addEventListener('click', () => {
-			this.elements.importFileInput.click();
-		});
+		this.elements.importBtn.addEventListener("click", () => {
+			this.elements.importFileInput.click()
+		})
 
-		this.elements.importFileInput.addEventListener('change', (e) => {
-			this.importAccounts(e.target.files[0]);
-		});
+		this.elements.importFileInput.addEventListener("change", (e) => {
+			this.importAccounts(e.target.files[0])
+		})
 
-		this.elements.clearAllBtn.addEventListener('click', () => {
-			this.clearAllAccounts();
-		});
+		this.elements.clearAllBtn.addEventListener("click", () => {
+			this.clearAllAccounts()
+		})
 
-		this.elements.refreshBtn.addEventListener('click', () => {
-			this.loadAccounts();
-		});
+		this.elements.refreshBtn.addEventListener("click", () => {
+			this.loadAccounts()
+		})
 
-		this.elements.confirmationCancel.addEventListener('click', () => {
-			this.hideConfirmation();
-		});
+		this.elements.confirmationCancel.addEventListener("click", () => {
+			this.hideConfirmation()
+		})
 
-		this.elements.confirmationConfirm.addEventListener('click', () => {
+		this.elements.confirmationConfirm.addEventListener("click", () => {
 			if (this.pendingConfirmAction) {
-				this.pendingConfirmAction();
-				this.hideConfirmation();
+				this.pendingConfirmAction()
+				this.hideConfirmation()
 			}
-		});
+		})
 
-		this.elements.confirmationOverlay.addEventListener('click', (e) => {
+		this.elements.confirmationOverlay.addEventListener("click", (e) => {
 			if (e.target === this.elements.confirmationOverlay) {
-				this.hideConfirmation();
+				this.hideConfirmation()
 			}
-		});
+		})
 	}
 
 	async loadAccounts() {
 		try {
-			showLoading();
-			this.accounts = await getStoredAccounts();
-			this.renderAccounts();
-			this.updateAccountCount();
+			showLoading()
+			this.accounts = await getStoredAccounts()
+			this.renderAccounts()
+			this.updateAccountCount()
 		} catch (error) {
-			console.error('Error loading accounts:', error);
-			showNotification('Failed to load accounts', 'error');
+			console.error("Error loading accounts:", error)
+			showNotification("Failed to load accounts", "error")
 		} finally {
-			hideLoading();
+			hideLoading()
 		}
 	}
 
 	renderAccounts() {
 		if (this.accounts.length === 0) {
-			this.showEmptyState();
-			return;
+			this.showEmptyState()
+			return
 		}
 
-		this.hideEmptyState();
-		
-		const accountsHTML = this.accounts.map((account, index) => {
-			const username = this.extractUsername(account.username);
-			const email = account.username;
-			const avatar = account.avatar || username.charAt(0).toUpperCase();
+		this.hideEmptyState()
 
-			const avatarHTML = account.avatar ? 
-				`<img class="account-avatar-img" src="${account.avatar}" alt="${username}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-				 <div class="account-avatar-fallback" style="display: none;">${username.charAt(0).toUpperCase()}</div>` :
-				`<div class="account-avatar-text">${username.charAt(0).toUpperCase()}</div>`;
+		const accountsHTML = this.accounts
+			.map((account, index) => {
+				const username =
+					account.fullName || this.extractUsername(account.username)
+				const email = account.username
 
-			return `
-				<li class="account slide-up" data-index="${index}" style="animation-delay: ${index * 0.1}s">
+				const avatarHTML = account.avatar
+					? `<img class="account-avatar-img" src="${
+							account.avatar
+					  }" alt="${username}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+				 <div class="account-avatar-fallback" style="display: none;">${username
+						.charAt(0)
+						.toUpperCase()}</div>`
+					: `<div class="account-avatar-text">${username
+							.charAt(0)
+							.toUpperCase()}</div>`
+
+				return `
+				<li class="account slide-up" data-index="${index}" style="animation-delay: ${
+					index * 0.1
+				}s">
 					<div class="account-info">
 						<div class="account-avatar">
 							${avatarHTML}
@@ -127,389 +136,417 @@ class ChatGPTSwitcher {
 						</button>
 					</div>
 				</li>
-			`;
-		}).join('');
+			`
+			})
+			.join("")
 
-		this.elements.accountList.innerHTML = accountsHTML;
+		this.elements.accountList.innerHTML = accountsHTML
 	}
 
 	async handleAccountAction(event) {
-		const deleteBtn = event.target.closest('.delete-btn');
-		const accountElement = event.target.closest('.account');
-		
-		if (!accountElement) return;
+		const deleteBtn = event.target.closest(".delete-btn")
+		const accountElement = event.target.closest(".account")
 
-		const index = parseInt(accountElement.dataset.index);
-		
+		if (!accountElement) return
+
+		const index = parseInt(accountElement.dataset.index)
+
 		if (deleteBtn) {
-			await this.deleteAccount(index);
+			await this.deleteAccount(index)
 		} else {
-			await this.switchAccount(index);
+			await this.switchAccount(index)
 		}
 	}
 
 	async addNewAccount() {
 		try {
-			showLoading();
-			
-			const { username, sessionToken, avatar } = await this.getCurrentAccountInfo();
-			
+			showLoading()
+
+			const { username, fullName, sessionToken, avatar } =
+				await this.getCurrentAccountInfo()
+
 			if (!username || !sessionToken) {
-				showNotification('Please log in to ChatGPT first', 'error');
-				return;
+				showNotification("Please log in to ChatGPT first", "error")
+				return
 			}
 
 			const existingAccountIndex = this.accounts.findIndex(
-				account => account.username === username
-			);
+				(account) => account.username === username
+			)
 
 			if (existingAccountIndex !== -1) {
 				// Update existing account
-				this.accounts[existingAccountIndex].sessionToken = sessionToken;
-				showNotification('Account updated successfully!', 'success');
+				this.accounts[existingAccountIndex].sessionToken = sessionToken
+				showNotification("Account updated successfully!", "success")
 			} else {
 				// Add new account
-				this.accounts.push({ username, avatar, sessionToken });
-				showNotification('Account added successfully!', 'success');
+				this.accounts.push({ username, fullName, avatar, sessionToken })
+				showNotification("Account added successfully!", "success")
 			}
 
-			await this.saveAccountsAndReload();
+			await this.saveAccountsAndReload()
 		} catch (error) {
-			console.error('Error adding account:', error);
-			showNotification(error.message, 'error');
+			console.error("Error adding account:", error)
+			showNotification(error.message, "error")
 		} finally {
-			hideLoading();
+			hideLoading()
 		}
 	}
 
 	async getCurrentAccountInfo() {
-		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-		const activeTab = tabs[0];
-		
+		const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+		const activeTab = tabs[0]
 
-		if (!activeTab?.url?.includes('chatgpt.com')) {
-			showNotification('Please navigate to ChatGPT first', 'error');
-			throw new Error('Please navigate to ChatGPT first');
+		if (!activeTab?.url?.includes("chatgpt.com")) {
+			showNotification("Please navigate to ChatGPT first", "error")
+			throw new Error("Please navigate to ChatGPT first")
 		}
 
 		const username = await new Promise((resolve) => {
 			chrome.tabs.sendMessage(
-				activeTab.id, 
-				{ action: 'getUsername' }, 
+				activeTab.id,
+				{ action: "getUsername" },
 				(response) => {
-					resolve(response?.email || '');
+					resolve(response?.email || "")
 				}
-			);
-		});
+			)
+		})
+
+		const fullName = await new Promise((resolve) => {
+			chrome.tabs.sendMessage(
+				activeTab.id,
+				{ action: "getFullName" },
+				(response) => {
+					resolve(response?.fullName || "")
+				}
+			)
+		})
 
 		const avatar = await new Promise((resolve) => {
 			chrome.tabs.sendMessage(
 				activeTab.id,
-				{ action: 'getAvatar' },
+				{ action: "getAvatar" },
 				(response) => {
-					resolve(response?.avatar || '');
+					resolve(response?.avatar || "")
 				}
-			);
-		});
+			)
+		})
 
-		const cookies = await chrome.cookies.getAll({ domain: '.chatgpt.com' });
+		const cookies = await chrome.cookies.getAll({ domain: ".chatgpt.com" })
 		const sessionCookie = cookies.find(
-			cookie => cookie.name === '__Secure-next-auth.session-token'
-		);
+			(cookie) => cookie.name === "__Secure-next-auth.session-token"
+		)
 
 		if (!sessionCookie) {
-			throw new Error('No session token found');
+			throw new Error("No session token found")
 		}
 
 		return {
 			username,
+			fullName,
 			avatar,
-			sessionToken: sessionCookie.value
-		};
+			sessionToken: sessionCookie.value,
+		}
 	}
 
 	async switchAccount(index) {
 		try {
-			showLoading();
-			
-			const account = this.accounts[index];
-			if (!account) throw new Error('Account not found');
+			showLoading()
+
+			const account = this.accounts[index]
+			if (!account) throw new Error("Account not found")
 
 			const success = await chrome.runtime.sendMessage({
-				action: 'setCookie',
+				action: "setCookie",
 				username: account.username,
-				sessionToken: account.sessionToken
-			});
+				sessionToken: account.sessionToken,
+			})
 
 			if (success) {
-				showNotification(`Switching to ${this.extractUsername(account.username)}!`, 'success');
-				setTimeout(() => window.close(), 1000);
+				showNotification(
+					`Switching to ${this.extractUsername(account.username)}!`,
+					"success"
+				)
+				setTimeout(() => window.close(), 1000)
 			} else {
-				throw new Error('Failed to switch account');
+				throw new Error("Failed to switch account")
 			}
 		} catch (error) {
-			console.error('Error switching account:', error);
-			showNotification('Failed to switch account', 'error');
+			console.error("Error switching account:", error)
+			showNotification("Failed to switch account", "error")
 		} finally {
-			hideLoading();
+			hideLoading()
 		}
 	}
 
 	async deleteAccount(index) {
 		try {
-			const account = this.accounts[index];
-			if (!account) return;
+			const account = this.accounts[index]
+			if (!account) return
 
-			const username = this.extractUsername(account.username);
-			
+			const username = this.extractUsername(account.username)
+
 			// Show custom confirmation dialog
 			this.showConfirmation(
 				`Delete Account`,
 				`Are you sure you want to delete "${username}"? This action cannot be undone.`,
 				async () => {
 					try {
-						showLoading();
-						
-						this.accounts.splice(index, 1);
-						await this.saveAccountsAndReload();
-						
-						showNotification(`Account "${username}" deleted`, 'success');
+						showLoading()
+
+						this.accounts.splice(index, 1)
+						await this.saveAccountsAndReload()
+
+						showNotification(`Account "${username}" deleted`, "success")
 					} catch (error) {
-						console.error('Error deleting account:', error);
-						showNotification('Failed to delete account', 'error');
+						console.error("Error deleting account:", error)
+						showNotification("Failed to delete account", "error")
 					} finally {
-						hideLoading();
+						hideLoading()
 					}
 				}
-			);
+			)
 		} catch (error) {
-			console.error('Error deleting account:', error);
-			showNotification('Failed to delete account', 'error');
+			console.error("Error deleting account:", error)
+			showNotification("Failed to delete account", "error")
 		}
 	}
 
 	async clearAllAccounts() {
 		try {
 			if (this.accounts.length === 0) {
-				showNotification('No accounts to clear', 'info');
-				return;
+				showNotification("No accounts to clear", "info")
+				return
 			}
 
-			const accountCount = this.accounts.length;
-			
+			const accountCount = this.accounts.length
+
 			this.showConfirmation(
 				`Clear All Accounts`,
-				`Are you sure you want to clear all ${accountCount} account${accountCount > 1 ? 's' : ''}? This action cannot be undone.`,
+				`Are you sure you want to clear all ${accountCount} account${
+					accountCount > 1 ? "s" : ""
+				}? This action cannot be undone.`,
 				async () => {
 					try {
-						showLoading();
-						
-						this.accounts = [];
-						await this.saveAccountsAndReload();
-						
-						showNotification(`All accounts cleared successfully`, 'success');
+						showLoading()
+
+						this.accounts = []
+						await this.saveAccountsAndReload()
+
+						showNotification(`All accounts cleared successfully`, "success")
 					} catch (error) {
-						console.error('Error clearing accounts:', error);
-						showNotification('Failed to clear accounts', 'error');
+						console.error("Error clearing accounts:", error)
+						showNotification("Failed to clear accounts", "error")
 					} finally {
-						hideLoading();
+						hideLoading()
 					}
 				}
-			);
+			)
 		} catch (error) {
-			console.error('Error clearing accounts:', error);
-			showNotification('Failed to clear accounts', 'error');
+			console.error("Error clearing accounts:", error)
+			showNotification("Failed to clear accounts", "error")
 		}
 	}
 
 	async saveAccountsAndReload() {
-		await saveAccounts(this.accounts);
-		await this.loadAccounts();
+		await saveAccounts(this.accounts)
+		await this.loadAccounts()
 	}
 
 	showEmptyState() {
-		this.elements.emptyState.classList.remove('hidden');
-		this.elements.accountList.style.display = 'none';
+		this.elements.emptyState.classList.remove("hidden")
+		this.elements.accountList.style.display = "none"
 	}
 
 	hideEmptyState() {
-		this.elements.emptyState.classList.add('hidden');
-		this.elements.accountList.style.display = 'flex';
+		this.elements.emptyState.classList.add("hidden")
+		this.elements.accountList.style.display = "flex"
 	}
 
 	updateAccountCount() {
-		this.elements.accountCount.textContent = this.accounts.length.toString();
+		this.elements.accountCount.textContent = this.accounts.length.toString()
 	}
 
 	extractUsername(email) {
-		return email.split('@')[0] || email;
+		return email.split("@")[0] || email
 	}
 
 	async exportAccounts() {
 		try {
 			if (this.accounts.length === 0) {
-				showNotification('No accounts to export', 'warning');
-				return;
+				showNotification("No accounts to export", "warning")
+				return
 			}
 
-			showLoading();
+			showLoading()
 
-			const exportData = this.accounts.map(account => ({
+			const exportData = this.accounts.map((account) => ({
 				username: account.username,
+				fullName: account.fullName || null,
 				avatar: account.avatar || null,
-				sessionToken: account.sessionToken
-			}));
+				sessionToken: account.sessionToken,
+			}))
 
-			const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-				type: 'application/json' 
-			});
-			
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `chatgpt-accounts-${new Date().toISOString().split('T')[0]}.json`;
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
+			const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+				type: "application/json",
+			})
 
-			showNotification(`Exported ${exportData.length} accounts successfully!`, 'success');
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement("a")
+			a.href = url
+			a.download = `chatgpt-accounts-${
+				new Date().toISOString().split("T")[0]
+			}.json`
+			document.body.appendChild(a)
+			a.click()
+			document.body.removeChild(a)
+			URL.revokeObjectURL(url)
+
+			showNotification(
+				`Exported ${exportData.length} accounts successfully!`,
+				"success"
+			)
 		} catch (error) {
-			console.error('Export error:', error);
-			showNotification('Failed to export accounts', 'error');
+			console.error("Export error:", error)
+			showNotification("Failed to export accounts", "error")
 		} finally {
-			hideLoading();
+			hideLoading()
 		}
 	}
 
 	async importAccounts(file) {
-		if (!file) return;
+		if (!file) return
 
 		try {
-			if (!file.name.toLowerCase().endsWith('.json')) {
-				showNotification('Please select a JSON file', 'error');
-				return;
+			if (!file.name.toLowerCase().endsWith(".json")) {
+				showNotification("Please select a JSON file", "error")
+				return
 			}
 
-			const maxSize = 5 * 1024 * 1024;
+			const maxSize = 5 * 1024 * 1024
 			if (file.size > maxSize) {
-				showNotification('File is too large. Maximum size is 5MB', 'error');
-				return;
+				showNotification("File is too large. Maximum size is 5MB", "error")
+				return
 			}
 
-			showLoading();
+			showLoading()
 
-			const fileContent = await this.readFile(file);
-			
-			const importedAccounts = await this.validateImportData(fileContent);
+			const fileContent = await this.readFile(file)
 
-			const importMode = await this.showImportDialog(importedAccounts.length);
-			if (!importMode) return;
+			const importedAccounts = await this.validateImportData(fileContent)
 
-			const result = await this.performImport(importedAccounts, importMode);
+			const importMode = await this.showImportDialog(importedAccounts.length)
+			if (!importMode) return
 
-			const message = importMode === 'merge' 
-				? `Successfully imported ${result.imported} accounts (${result.updated} updated, ${result.added} added)`
-				: `Successfully imported ${result.imported} accounts`;
-			
-			showNotification(message, 'success');
-			await this.loadAccounts();
+			const result = await this.performImport(importedAccounts, importMode)
 
+			const message =
+				importMode === "merge"
+					? `Successfully imported ${result.imported} accounts (${result.updated} updated, ${result.added} added)`
+					: `Successfully imported ${result.imported} accounts`
+
+			showNotification(message, "success")
+			await this.loadAccounts()
 		} catch (error) {
-			console.error('Import error:', error);
-			showNotification(`Import failed: ${error.message}`, 'error');
+			console.error("Import error:", error)
+			showNotification(`Import failed: ${error.message}`, "error")
 		} finally {
-			hideLoading();
-			this.elements.importFileInput.value = '';
+			hideLoading()
+			this.elements.importFileInput.value = ""
 		}
 	}
 
 	readFile(file) {
 		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			
-			reader.onload = (e) => resolve(e.target.result);
-			reader.onerror = () => reject(new Error('Failed to read file'));
-			
-			reader.readAsText(file);
-		});
+			const reader = new FileReader()
+
+			reader.onload = (e) => resolve(e.target.result)
+			reader.onerror = () => reject(new Error("Failed to read file"))
+
+			reader.readAsText(file)
+		})
 	}
 
 	async validateImportData(jsonString) {
-		let data;
-		
+		let data
+
 		try {
-			data = JSON.parse(jsonString);
+			data = JSON.parse(jsonString)
 		} catch (error) {
-			throw new Error('Invalid JSON format');
+			throw new Error("Invalid JSON format")
 		}
 
 		if (!Array.isArray(data)) {
-			throw new Error('File must contain an array of accounts');
+			throw new Error("File must contain an array of accounts")
 		}
 
 		if (data.length === 0) {
-			throw new Error('No accounts found in the file');
+			throw new Error("No accounts found in the file")
 		}
 
-		const validAccounts = [];
-		const errors = [];
+		const validAccounts = []
+		const errors = []
 
 		data.forEach((account, index) => {
-			if (!account || typeof account !== 'object') {
-				errors.push(`Account ${index + 1}: Invalid account object`);
-				return;
+			if (!account || typeof account !== "object") {
+				errors.push(`Account ${index + 1}: Invalid account object`)
+				return
 			}
 
-			if (!account.username || typeof account.username !== 'string') {
-				errors.push(`Account ${index + 1}: Missing or invalid username`);
-				return;
+			if (!account.username || typeof account.username !== "string") {
+				errors.push(`Account ${index + 1}: Missing or invalid username`)
+				return
 			}
 
-			if (!account.sessionToken || typeof account.sessionToken !== 'string') {
-				errors.push(`Account ${index + 1}: Missing or invalid session token`);
-				return;
+			if (!account.sessionToken || typeof account.sessionToken !== "string") {
+				errors.push(`Account ${index + 1}: Missing or invalid session token`)
+				return
 			}
 
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 			if (!emailRegex.test(account.username)) {
-				errors.push(`Account ${index + 1}: Invalid email format`);
-				return;
+				errors.push(`Account ${index + 1}: Invalid email format`)
+				return
 			}
 
 			validAccounts.push({
 				username: account.username.trim(),
+				fullName: account.fullName || null,
 				avatar: account.avatar || null,
-				sessionToken: account.sessionToken.trim()
-			});
-		});
+				sessionToken: account.sessionToken.trim(),
+			})
+		})
 
 		if (errors.length > 0) {
-			throw new Error(`Validation errors:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...and more' : ''}`);
+			throw new Error(
+				`Validation errors:\n${errors.slice(0, 5).join("\n")}${
+					errors.length > 5 ? "\n...and more" : ""
+				}`
+			)
 		}
 
 		if (validAccounts.length === 0) {
-			throw new Error('No valid accounts found');
+			throw new Error("No valid accounts found")
 		}
 
-		return validAccounts;
+		return validAccounts
 	}
 
 	showImportDialog(accountCount) {
 		return new Promise((resolve) => {
-			const existingCount = this.accounts.length;
-			
+			const existingCount = this.accounts.length
+
 			if (existingCount > 0) {
-				this.showImportOptionsDialog(accountCount, existingCount, resolve);
+				this.showImportOptionsDialog(accountCount, existingCount, resolve)
 			} else {
-				this.showImportConfirmationDialog(accountCount, resolve);
+				this.showImportConfirmationDialog(accountCount, resolve)
 			}
-		});
+		})
 	}
 
 	showImportConfirmationDialog(accountCount, resolve) {
-		const importOverlay = document.createElement('div');
-		importOverlay.className = 'confirmation-overlay show';
+		const importOverlay = document.createElement("div")
+		importOverlay.className = "confirmation-overlay show"
 		importOverlay.innerHTML = `
 			<div class="confirmation-dialog">
 				<div class="confirmation-header">
@@ -523,35 +560,39 @@ class ChatGPTSwitcher {
 					<h3>Import Accounts</h3>
 				</div>
 				<div class="confirmation-body">
-					<p>Import ${accountCount} account${accountCount > 1 ? 's' : ''}?</p>
+					<p>Import ${accountCount} account${accountCount > 1 ? "s" : ""}?</p>
 				</div>
 				<div class="confirmation-actions">
 					<button id="importConfirmCancel" class="secondary-btn">Cancel</button>
 					<button id="importConfirmOk" class="primary-btn">Import</button>
 				</div>
 			</div>
-		`;
-		
-		document.body.appendChild(importOverlay);
-		
+		`
+
+		document.body.appendChild(importOverlay)
+
 		const handleChoice = (choice) => {
-			importOverlay.remove();
-			resolve(choice);
-		};
-		
-		importOverlay.querySelector('#importConfirmCancel').addEventListener('click', () => handleChoice(null));
-		importOverlay.querySelector('#importConfirmOk').addEventListener('click', () => handleChoice('replace'));
-		
-		importOverlay.addEventListener('click', (e) => {
+			importOverlay.remove()
+			resolve(choice)
+		}
+
+		importOverlay
+			.querySelector("#importConfirmCancel")
+			.addEventListener("click", () => handleChoice(null))
+		importOverlay
+			.querySelector("#importConfirmOk")
+			.addEventListener("click", () => handleChoice("replace"))
+
+		importOverlay.addEventListener("click", (e) => {
 			if (e.target === importOverlay) {
-				handleChoice(null);
+				handleChoice(null)
 			}
-		});
+		})
 	}
 
 	showImportOptionsDialog(accountCount, existingCount, resolve) {
-		const importOverlay = document.createElement('div');
-		importOverlay.className = 'confirmation-overlay show';
+		const importOverlay = document.createElement("div")
+		importOverlay.className = "confirmation-overlay show"
 		importOverlay.innerHTML = `
 			<div class="confirmation-dialog">
 				<div class="confirmation-header">
@@ -565,7 +606,9 @@ class ChatGPTSwitcher {
 					<h3>Import ${accountCount} Accounts</h3>
 				</div>
 				<div class="confirmation-body">
-					<p>You have ${existingCount} existing account${existingCount > 1 ? 's' : ''}. How would you like to import?</p>
+					<p>You have ${existingCount} existing account${
+			existingCount > 1 ? "s" : ""
+		}. How would you like to import?</p>
 				</div>
 				<div class="import-options-actions">
 					<button id="importCancel" class="secondary-btn">Cancel</button>
@@ -573,82 +616,88 @@ class ChatGPTSwitcher {
 					<button id="importReplace" class="danger-btn">Replace</button>
 				</div>
 			</div>
-		`;
-		
-		document.body.appendChild(importOverlay);
-		
+		`
+
+		document.body.appendChild(importOverlay)
+
 		const handleChoice = (choice) => {
-			importOverlay.remove();
-			resolve(choice);
-		};
-		
-		importOverlay.querySelector('#importCancel').addEventListener('click', () => handleChoice(null));
-		importOverlay.querySelector('#importMerge').addEventListener('click', () => handleChoice('merge'));
-		importOverlay.querySelector('#importReplace').addEventListener('click', () => handleChoice('replace'));
-		
-		importOverlay.addEventListener('click', (e) => {
+			importOverlay.remove()
+			resolve(choice)
+		}
+
+		importOverlay
+			.querySelector("#importCancel")
+			.addEventListener("click", () => handleChoice(null))
+		importOverlay
+			.querySelector("#importMerge")
+			.addEventListener("click", () => handleChoice("merge"))
+		importOverlay
+			.querySelector("#importReplace")
+			.addEventListener("click", () => handleChoice("replace"))
+
+		importOverlay.addEventListener("click", (e) => {
 			if (e.target === importOverlay) {
-				handleChoice(null);
+				handleChoice(null)
 			}
-		});
+		})
 	}
 
 	async performImport(newAccounts, mode) {
 		try {
-			if (mode === 'replace') {
-				this.accounts = newAccounts;
-				await saveAccounts(this.accounts);
-				
+			if (mode === "replace") {
+				this.accounts = newAccounts
+				await saveAccounts(this.accounts)
+
 				return {
 					imported: newAccounts.length,
 					added: newAccounts.length,
-					updated: 0
-				};
+					updated: 0,
+				}
 			} else {
-				const accountMap = new Map();
-				let updated = 0;
-				let added = 0;
+				const accountMap = new Map()
+				let updated = 0
+				let added = 0
 
-				this.accounts.forEach(account => {
-					accountMap.set(account.username, account);
-				});
+				this.accounts.forEach((account) => {
+					accountMap.set(account.username, account)
+				})
 
-				newAccounts.forEach(account => {
+				newAccounts.forEach((account) => {
 					if (accountMap.has(account.username)) {
-						updated++;
+						updated++
 					} else {
-						added++;
+						added++
 					}
-					accountMap.set(account.username, account);
-				});
+					accountMap.set(account.username, account)
+				})
 
-				this.accounts = Array.from(accountMap.values());
-				await saveAccounts(this.accounts);
+				this.accounts = Array.from(accountMap.values())
+				await saveAccounts(this.accounts)
 
 				return {
 					imported: newAccounts.length,
 					added,
-					updated
-				};
+					updated,
+				}
 			}
 		} catch (error) {
-			throw new Error(`Import failed: ${error.message}`);
+			throw new Error(`Import failed: ${error.message}`)
 		}
 	}
 
 	showConfirmation(title, message, onConfirm) {
-		this.elements.confirmationTitle.textContent = title;
-		this.elements.confirmationMessage.textContent = message;
-		this.pendingConfirmAction = onConfirm;
-		this.elements.confirmationOverlay.classList.add('show');
+		this.elements.confirmationTitle.textContent = title
+		this.elements.confirmationMessage.textContent = message
+		this.pendingConfirmAction = onConfirm
+		this.elements.confirmationOverlay.classList.add("show")
 	}
 
 	hideConfirmation() {
-		this.elements.confirmationOverlay.classList.remove('show');
-		this.pendingConfirmAction = null;
+		this.elements.confirmationOverlay.classList.remove("show")
+		this.pendingConfirmAction = null
 	}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-	new ChatGPTSwitcher();
-});
+document.addEventListener("DOMContentLoaded", () => {
+	new ChatGPTSwitcher()
+})

@@ -1,73 +1,90 @@
 class ChatGPTContentScript {
 	constructor() {
-		this.init();
+		this.init()
 	}
 
 	init() {
-		this.setupMessageListener();
-		this.observePageChanges();
+		this.setupMessageListener()
+		this.observePageChanges()
 	}
 
 	setupMessageListener() {
 		chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-			if (request.action === 'getUsername') {
+			if (request.action === "getUsername") {
 				this.getUserEmail()
-					.then(email => sendResponse({ email }))
-					.catch(error => {
-						console.error('Error getting username:', error);
-						sendResponse({ email: null, error: error.message });
-					});
-				return true;
+					.then((email) => sendResponse({ email }))
+					.catch((error) => {
+						console.error("Error getting username:", error)
+						sendResponse({ email: null, error: error.message })
+					})
+				return true
 			}
-			if (request.action === 'getAvatar') {
+			if (request.action === "getAvatar") {
 				this.getUserAvatar()
-					.then(avatar => sendResponse({ avatar }))
-					.catch(error => {
-						console.error('Error getting avatar:', error);
-						sendResponse({ avatar: null, error: error.message });
-					});
-				return true;
+					.then((avatar) => sendResponse({ avatar }))
+					.catch((error) => {
+						console.error("Error getting avatar:", error)
+						sendResponse({ avatar: null, error: error.message })
+					})
+				return true
 			}
-		});
+			if (request.action === "getFullName") {
+				this.getUserFullName()
+					.then((fullName) => sendResponse({ fullName }))
+					.catch((error) => {
+						console.error("Error getting full name:", error)
+						sendResponse({ fullName: null, error: error.message })
+					})
+				return true
+			}
+		})
 	}
 
 	async getUserEmail() {
-		const emailFromScript = this.extractEmailFromScripts();
+		const emailFromScript = this.extractEmailFromScripts()
 		if (emailFromScript) {
-			console.log('Email found in script:', emailFromScript);
-			return emailFromScript;
+			console.log("Email found in script:", emailFromScript)
+			return emailFromScript
 		}
 
-		const emailFromStorage = this.extractEmailFromStorage();
+		const emailFromStorage = this.extractEmailFromStorage()
 		if (emailFromStorage) {
-			return emailFromStorage;
+			return emailFromStorage
 		}
 
-		const emailFromDOM = this.extractEmailFromDOM();
+		const emailFromDOM = this.extractEmailFromDOM()
 		if (emailFromDOM) {
-			return emailFromDOM;
+			return emailFromDOM
 		}
 
-		return await this.waitForEmailToLoad();
+		return await this.waitForEmailToLoad()
 	}
 
 	async getUserAvatar() {
-		const img = document.querySelector('img[alt="Profile image"].h-6.w-6.shrink-0');
+		const img = document.querySelector('img[alt="Profile image"]')
 		if (img && img.src) {
-			return img.src;
+			return img.src
 		}
-		return null;
+		return null
+	}
+
+	async getUserFullName() {
+		const name = document
+			.querySelector('[data-testid="accounts-profile-button"] .truncate')
+			?.textContent.trim()
+		if (name) return name
+		return null
 	}
 
 	extractEmailFromScripts() {
 		try {
-			const scripts = document.querySelectorAll('script');
-			
+			const scripts = document.querySelectorAll("script")
+
 			for (const script of scripts) {
-				const content = script.textContent || script.innerText;
-				
-				if (!content || content.trim().length === 0) continue;
-				
+				const content = script.textContent || script.innerText
+
+				if (!content || content.trim().length === 0) continue
+
 				const patterns = [
 					/["']email["']\s*:\s*["']([^"']+)["']/g,
 					/\\"email\\"\s*:\s*\\"([^"\\]+)\\"/g,
@@ -76,69 +93,84 @@ class ChatGPTContentScript {
 					/window\.__reactRouterContext[^}]*"email"\s*[,:]?\s*"([^"]+)"/gi,
 					/__NEXT_DATA__[^}]*"email"\s*[,:]?\s*"([^"]+)"/gi,
 					/"email"\s*[,:]?\s*"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"/g,
-					/email['"]\s*[,:]?\s*['"]\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s*['"]/g
-				];
+					/email['"]\s*[,:]?\s*['"]\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s*['"]/g,
+				]
 
 				for (const pattern of patterns) {
-					const matches = content.matchAll(pattern);
+					const matches = content.matchAll(pattern)
 					for (const match of matches) {
-						const email = match[1];
+						const email = match[1]
 						if (this.isValidEmail(email)) {
-							console.log('Found email with pattern:', pattern.source, 'Email:', email);
-							return email;
+							console.log(
+								"Found email with pattern:",
+								pattern.source,
+								"Email:",
+								email
+							)
+							return email
 						}
 					}
 				}
-				
-				const emailMatches = content.match(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g);
+
+				const emailMatches = content.match(
+					/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g
+				)
 				if (emailMatches) {
 					for (const email of emailMatches) {
 						if (this.isValidEmail(email) && !this.isCommonTestEmail(email)) {
-							console.log('Found email with fallback search:', email);
-							return email;
+							console.log("Found email with fallback search:", email)
+							return email
 						}
 					}
 				}
 			}
 		} catch (error) {
-			console.error('Error extracting email from scripts:', error);
+			console.error("Error extracting email from scripts:", error)
 		}
-		
-		return null;
+
+		return null
 	}
 
 	extractEmailFromStorage() {
 		try {
 			for (let i = 0; i < localStorage.length; i++) {
-				const key = localStorage.key(i);
-				if (key && (key.includes('user') || key.includes('auth') || key.includes('session'))) {
+				const key = localStorage.key(i)
+				if (
+					key &&
+					(key.includes("user") ||
+						key.includes("auth") ||
+						key.includes("session"))
+				) {
 					try {
-						const value = localStorage.getItem(key);
-						const parsed = JSON.parse(value);
-						const email = this.findEmailInObject(parsed);
-						if (email) return email;
-					} catch (e) {
-					}
+						const value = localStorage.getItem(key)
+						const parsed = JSON.parse(value)
+						const email = this.findEmailInObject(parsed)
+						if (email) return email
+					} catch (e) {}
 				}
 			}
 
 			for (let i = 0; i < sessionStorage.length; i++) {
-				const key = sessionStorage.key(i);
-				if (key && (key.includes('user') || key.includes('auth') || key.includes('session'))) {
+				const key = sessionStorage.key(i)
+				if (
+					key &&
+					(key.includes("user") ||
+						key.includes("auth") ||
+						key.includes("session"))
+				) {
 					try {
-						const value = sessionStorage.getItem(key);
-						const parsed = JSON.parse(value);
-						const email = this.findEmailInObject(parsed);
-						if (email) return email;
-					} catch (e) {
-					}
+						const value = sessionStorage.getItem(key)
+						const parsed = JSON.parse(value)
+						const email = this.findEmailInObject(parsed)
+						if (email) return email
+					} catch (e) {}
 				}
 			}
 		} catch (error) {
-			console.error('Error extracting email from storage:', error);
+			console.error("Error extracting email from storage:", error)
 		}
 
-		return null;
+		return null
 	}
 
 	extractEmailFromDOM() {
@@ -146,98 +178,107 @@ class ChatGPTContentScript {
 			const selectors = [
 				'[data-testid="user-email"]',
 				'[aria-label*="email"]',
-				'.user-email',
+				".user-email",
 				'[title*="@"]',
 				'span:contains("@")',
-				'div:contains("@")'
-			];
+				'div:contains("@")',
+			]
 
 			for (const selector of selectors) {
-				const elements = document.querySelectorAll(selector);
+				const elements = document.querySelectorAll(selector)
 				for (const element of elements) {
-					const text = element.textContent || element.title || element.getAttribute('aria-label') || '';
-					const email = this.extractEmailFromText(text);
-					if (email) return email;
+					const text =
+						element.textContent ||
+						element.title ||
+						element.getAttribute("aria-label") ||
+						""
+					const email = this.extractEmailFromText(text)
+					if (email) return email
 				}
 			}
 
-			const allText = document.body.textContent || '';
-			const emailMatch = allText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+			const allText = document.body.textContent || ""
+			const emailMatch = allText.match(
+				/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
+			)
 			if (emailMatch && this.isValidEmail(emailMatch[0])) {
-				return emailMatch[0];
+				return emailMatch[0]
 			}
 		} catch (error) {
-			console.error('Error extracting email from DOM:', error);
+			console.error("Error extracting email from DOM:", error)
 		}
 
-		return null;
+		return null
 	}
 
 	async waitForEmailToLoad(maxWaitTime = 5000, checkInterval = 500) {
 		return new Promise((resolve) => {
-			let totalWaitTime = 0;
-			
+			let totalWaitTime = 0
+
 			const checkForEmail = () => {
-				const email = this.extractEmailFromScripts() || 
-							 this.extractEmailFromStorage() || 
-							 this.extractEmailFromDOM();
-				
+				const email =
+					this.extractEmailFromScripts() ||
+					this.extractEmailFromStorage() ||
+					this.extractEmailFromDOM()
+
 				if (email) {
-					resolve(email);
-					return;
+					resolve(email)
+					return
 				}
 
-				totalWaitTime += checkInterval;
+				totalWaitTime += checkInterval
 				if (totalWaitTime >= maxWaitTime) {
-					resolve(null);
-					return;
+					resolve(null)
+					return
 				}
 
-				setTimeout(checkForEmail, checkInterval);
-			};
+				setTimeout(checkForEmail, checkInterval)
+			}
 
-			checkForEmail();
-		});
+			checkForEmail()
+		})
 	}
 
 	findEmailInObject(obj) {
-		if (!obj || typeof obj !== 'object') return null;
+		if (!obj || typeof obj !== "object") return null
 
 		if (obj.email && this.isValidEmail(obj.email)) {
-			return obj.email;
+			return obj.email
 		}
 
 		for (const key in obj) {
-			if (key.toLowerCase().includes('email') && this.isValidEmail(obj[key])) {
-				return obj[key];
+			if (key.toLowerCase().includes("email") && this.isValidEmail(obj[key])) {
+				return obj[key]
 			}
-			
-			if (typeof obj[key] === 'object') {
-				const nestedEmail = this.findEmailInObject(obj[key]);
-				if (nestedEmail) return nestedEmail;
+
+			if (typeof obj[key] === "object") {
+				const nestedEmail = this.findEmailInObject(obj[key])
+				if (nestedEmail) return nestedEmail
 			}
 		}
 
-		return null;
+		return null
 	}
 
 	extractEmailFromText(text) {
-		if (!text) return null;
-		
-		const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
-		return emailMatch && this.isValidEmail(emailMatch[0]) ? emailMatch[0] : null;
+		if (!text) return null
+
+		const emailMatch = text.match(
+			/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
+		)
+		return emailMatch && this.isValidEmail(emailMatch[0]) ? emailMatch[0] : null
 	}
 
 	isValidEmail(email) {
-		if (!email || typeof email !== 'string') return false;
-		
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(email) && email.length > 3 && email.length < 256;
+		if (!email || typeof email !== "string") return false
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		return emailRegex.test(email) && email.length > 3 && email.length < 256
 	}
 
 	isCommonTestEmail(email) {
-		if (!email) return false;
-		
+		if (!email) return false
+
 		const testEmailPatterns = [
 			/test@/i,
 			/example@/i,
@@ -246,34 +287,33 @@ class ChatGPTContentScript {
 			/@test\./i,
 			/@demo\./i,
 			/noreply@/i,
-			/no-reply@/i
-		];
-		
-		return testEmailPatterns.some(pattern => pattern.test(email));
+			/no-reply@/i,
+		]
+
+		return testEmailPatterns.some((pattern) => pattern.test(email))
 	}
 
 	observePageChanges() {
-		if (typeof MutationObserver !== 'undefined') {
-			const observer = new MutationObserver((mutations) => {
-			});
+		if (typeof MutationObserver !== "undefined") {
+			const observer = new MutationObserver((mutations) => {})
 
 			observer.observe(document.body, {
 				childList: true,
 				subtree: true,
-				attributes: false
-			});
+				attributes: false,
+			})
 
-			setTimeout(() => observer.disconnect(), 10000);
+			setTimeout(() => observer.disconnect(), 10000)
 		}
 	}
 
 	detectEmail() {
-		return this.getUserEmail();
+		return this.getUserEmail()
 	}
 }
 
-const chatGPTContentScript = new ChatGPTContentScript();
+const chatGPTContentScript = new ChatGPTContentScript()
 
-if (typeof window !== 'undefined') {
-	window.chatGPTSwitcher = chatGPTContentScript;
+if (typeof window !== "undefined") {
+	window.chatGPTSwitcher = chatGPTContentScript
 }
