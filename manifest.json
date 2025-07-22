@@ -7,8 +7,7 @@
 		"cookies",
 		"storage",
 		"activeTab",
-		"downloads",
-		"notifications"
+		"downloads"
 	],
 	"host_permissions": ["https://chatgpt.com/*"],
 	"background": {
@@ -31,11 +30,5 @@
 		"48": "icons/icon48.png",
 		"64": "icons/icon64.png",
 		"128": "icons/icon128.png"
-	},
-	"web_accessible_resources": [
-		{
-			"resources": ["import.html"],
-			"matches": ["<all_urls>"]
-		}
-	]
+	}
 }
