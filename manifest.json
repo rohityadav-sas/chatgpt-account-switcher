@@ -1,0 +1,41 @@
+{
+	"manifest_version": 3,
+	"name": "ChatGPT Switcher",
+	"version": "2.0.0",
+	"description": "Switch between ChatGPT accounts seamlessly with a beautiful, modern interface",
+	"permissions": [
+		"cookies",
+		"storage",
+		"activeTab",
+		"downloads",
+		"notifications"
+	],
+	"host_permissions": ["https://chatgpt.com/*"],
+	"background": {
+		"service_worker": "background/background.js",
+		"type": "module"
+	},
+	"content_scripts": [
+		{
+			"matches": ["https://chatgpt.com/*"],
+			"js": ["content/content.js"],
+			"run_at": "document_idle"
+		}
+	],
+	"action": {
+		"default_popup": "popup/popup.html",
+		"default_title": "ChatGPT Switcher"
+	},
+	"icons": {
+		"16": "icons/icon16.png",
+		"48": "icons/icon48.png",
+		"64": "icons/icon64.png",
+		"128": "icons/icon128.png"
+	},
+	"web_accessible_resources": [
+		{
+			"resources": ["import.html"],
+			"matches": ["<all_urls>"]
+		}
+	]
+}

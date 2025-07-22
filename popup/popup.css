@@ -1,0 +1,707 @@
+/* Modern Color Variables */
+:root {
+	--primary: #10b981;
+	--primary-dark: #059669;
+	--secondary: #6366f1;
+	--secondary-dark: #4f46e5;
+	--danger: #ef4444;
+	--danger-dark: #dc2626;
+	--warning: #f59e0b;
+	--success: #10b981;
+
+	--bg-primary: #0f172a;
+	--bg-secondary: #1e293b;
+	--bg-tertiary: #334155;
+	--bg-card: #1e293b;
+	--bg-hover: #334155;
+
+	--text-primary: #f8fafc;
+	--text-secondary: #94a3b8;
+	--text-muted: #64748b;
+
+	--border: #334155;
+	--border-light: #475569;
+
+	--shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	
+	--radius: 8px;
+	--radius-lg: 12px;
+	--transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset & Base Styles */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	width: 380px;
+	min-height: 500px;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Popup Container */
+.popup-container {
+	display: flex;
+	flex-direction: column;
+	min-height: 500px;
+}
+
+/* Header Styles */
+.header {
+	background: var(--bg-secondary);
+	border-bottom: 1px solid var(--border);
+	padding: 16px 20px;
+}
+
+.header-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.logo {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.logo svg {
+	color: var(--primary);
+	flex-shrink: 0;
+}
+
+.logo h1 {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.actions {
+	display: flex;
+	gap: 4px;
+}
+
+.icon-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: transparent;
+	border: none;
+	border-radius: var(--radius);
+	color: var(--text-secondary);
+	cursor: pointer;
+	transition: var(--transition);
+}
+
+.icon-btn:hover {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+}
+
+/* Main Content */
+.main-content {
+	flex: 1;
+	padding: 20px;
+	overflow-y: auto;
+}
+
+.account-section {
+	height: 100%;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.section-header h2 {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.account-count {
+	background: var(--bg-tertiary);
+	color: var(--text-primary);
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+/* Account List */
+.account-list-container {
+	position: relative;
+	min-height: 300px;
+}
+
+.account-list {
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.account {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: var(--transition);
+	position: relative;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.account::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 3px;
+	height: 100%;
+	background: var(--primary);
+	opacity: 0;
+	transition: var(--transition);
+}
+
+.account:hover {
+	background: var(--bg-hover);
+	border-color: var(--border-light);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-lg);
+}
+
+.account:hover::before {
+	opacity: 1;
+}
+
+.account-info {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+	min-width: 0;
+}
+
+.account-avatar {
+	width: 36px;
+	height: 36px;
+	background: linear-gradient(135deg, var(--primary), var(--secondary));
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+	font-weight: 600;
+	font-size: 14px;
+	flex-shrink: 0;
+	position: relative;
+	overflow: hidden;
+}
+
+.account-avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.account-avatar-fallback,
+.account-avatar-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(135deg, var(--primary), var(--secondary));
+	color: white;
+	font-weight: 600;
+	font-size: 14px;
+	border-radius: 50%;
+}
+
+.account-details {
+	min-width: 0;
+	flex: 1;
+}
+
+.account-username {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--text-primary);
+	margin-bottom: 2px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.account-email {
+	font-size: 12px;
+	color: var(--text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.account-actions {
+	display: flex;
+	gap: 6px;
+	opacity: 0;
+	transition: var(--transition);
+}
+
+.account:hover .account-actions {
+	opacity: 1;
+}
+
+.action-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: var(--transition);
+	font-size: 12px;
+}
+
+.switch-btn {
+	background: var(--primary);
+	color: white;
+}
+
+.switch-btn:hover {
+	background: var(--primary-dark);
+	transform: scale(1.05);
+}
+
+.delete-btn {
+	background: var(--danger);
+	color: white;
+}
+
+.delete-btn:hover {
+	background: var(--danger-dark);
+	transform: scale(1.05);
+}
+
+/* Empty State */
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	padding: 40px 20px;
+	height: 300px;
+}
+
+.empty-state.hidden {
+	display: none;
+}
+
+.empty-state svg {
+	color: var(--text-muted);
+	margin-bottom: 16px;
+	opacity: 0.5;
+}
+
+.empty-state p {
+	font-size: 16px;
+	font-weight: 500;
+	color: var(--text-secondary);
+	margin-bottom: 4px;
+}
+
+.empty-state span {
+	font-size: 14px;
+	color: var(--text-muted);
+}
+
+/* Footer */
+.footer {
+	padding: 16px 20px;
+	border-top: 1px solid var(--border);
+	background: var(--bg-secondary);
+}
+
+.primary-btn {
+	width: 100%;
+	height: 44px;
+	background: var(--primary);
+	color: white;
+	border: none;
+	border-radius: var(--radius-lg);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: var(--transition);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.primary-btn:hover {
+	background: var(--primary-dark);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-lg);
+}
+
+.primary-btn:active {
+	transform: translateY(0);
+}
+
+.primary-btn svg {
+	flex-shrink: 0;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(15, 23, 42, 0.8);
+	backdrop-filter: blur(4px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: var(--transition);
+	z-index: 1000;
+}
+
+.loading-overlay.show {
+	opacity: 1;
+	visibility: visible;
+}
+
+.loading-spinner {
+	color: var(--primary);
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Scrollbar Styling */
+.main-content::-webkit-scrollbar {
+	width: 4px;
+}
+
+.main-content::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+	background: var(--border);
+	border-radius: 2px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+	background: var(--border-light);
+}
+
+/* Animation Classes */
+.fade-in {
+	animation: fadeIn 0.3s ease-out;
+}
+
+.slide-up {
+	animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes slideUp {
+	from { 
+		opacity: 0; 
+		transform: translateY(10px);
+	}
+	to { 
+		opacity: 1; 
+		transform: translateY(0);
+	}
+}
+
+/* Success/Error States */
+.success-message, .error-message, .info-message, .warning-message {
+	position: fixed;
+	top: 16px;
+	right: 16px;
+	padding: 12px 16px;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 500;
+	animation: slideIn 0.3s ease-out;
+	z-index: 2000;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 200px;
+}
+
+.success-message {
+	background: var(--success);
+	color: white;
+}
+
+.error-message {
+	background: var(--danger);
+	color: white;
+}
+
+.info-message {
+	background: var(--secondary);
+	color: white;
+}
+
+.warning-message {
+	background: var(--warning);
+	color: white;
+}
+
+.notification-message {
+	flex: 1;
+}
+
+.notification-close {
+	background: none;
+	border: none;
+	color: currentColor;
+	cursor: pointer;
+	padding: 2px;
+	border-radius: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.7;
+	transition: var(--transition);
+	flex-shrink: 0;
+}
+
+.notification-close:hover {
+	opacity: 1;
+	background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateX(100%);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* Custom Confirmation Dialog */
+.confirmation-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(15, 23, 42, 0.9);
+	backdrop-filter: blur(8px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: var(--transition);
+	z-index: 2000;
+}
+
+.confirmation-overlay.show {
+	opacity: 1;
+	visibility: visible;
+}
+
+.confirmation-dialog {
+	background: var(--bg-secondary);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	width: 320px;
+	max-width: calc(100% - 40px);
+	transform: scale(0.9);
+	transition: var(--transition);
+}
+
+.confirmation-overlay.show .confirmation-dialog {
+	transform: scale(1);
+}
+
+.confirmation-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 20px 20px 16px;
+	border-bottom: 1px solid var(--border);
+}
+
+.confirmation-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background: rgba(239, 68, 68, 0.1);
+	border-radius: 50%;
+	color: var(--danger);
+	flex-shrink: 0;
+}
+
+.confirmation-icon.import-icon {
+	background: rgba(16, 185, 129, 0.1);
+	color: var(--primary);
+}
+
+.confirmation-header h3 {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-primary);
+	margin: 0;
+}
+
+.confirmation-body {
+	padding: 16px 20px;
+}
+
+.confirmation-body p {
+	color: var(--text-secondary);
+	line-height: 1.5;
+	margin: 0;
+}
+
+.confirmation-actions {
+	display: flex;
+	gap: 8px;
+	padding: 16px 20px 20px;
+	justify-content: flex-end;
+}
+
+.secondary-btn {
+	height: 36px;
+	padding: 0 16px;
+	background: transparent;
+	color: var(--text-secondary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: var(--transition);
+}
+
+.secondary-btn:hover {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+	border-color: var(--border-light);
+}
+
+.danger-btn {
+	height: 36px;
+	padding: 0 16px;
+	background: var(--danger);
+	color: white;
+	border: none;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: var(--transition);
+}
+
+.danger-btn:hover {
+	background: var(--danger-dark);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Import Options Dialog */
+.import-options-actions {
+	display: flex;
+	gap: 8px;
+	padding: 16px 20px 20px;
+	justify-content: flex-end;
+}
+
+.import-options-actions .primary-btn,
+.import-options-actions .secondary-btn,
+.import-options-actions .danger-btn {
+	height: 36px;
+	padding: 0 16px;
+	font-size: 14px;
+	border-radius: var(--radius);
+}
+
+.import-options-actions .primary-btn {
+	background: var(--primary);
+	color: white;
+	border: none;
+	font-weight: 600;
+}
+
+.import-options-actions .primary-btn:hover {
+	background: var(--primary-dark);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Import Confirmation Dialog - Override default button sizing */
+.confirmation-actions .primary-btn,
+.confirmation-actions .secondary-btn {
+	width: auto;
+	height: 36px;
+	padding: 0 16px;
+	font-size: 14px;
+	border-radius: var(--radius);
+}
+
+.confirmation-actions .primary-btn {
+	background: var(--primary);
+	color: white;
+	border: none;
+	font-weight: 600;
+}
+
+.confirmation-actions .primary-btn:hover {
+	background: var(--primary-dark);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
