@@ -21,6 +21,8 @@ class ChatGPTSwitcher {
 		}
 
 		this.accounts = []
+		this.draggedElement = null
+		this.draggedIndex = null
 		this.init()
 	}
 
@@ -32,6 +34,23 @@ class ChatGPTSwitcher {
 	attachEventListeners() {
 		this.elements.accountList.addEventListener("click", (e) => {
 			this.handleAccountAction(e)
+		})
+
+		// Add drag and drop event listeners
+		this.elements.accountList.addEventListener("dragstart", (e) => {
+			this.handleDragStart(e)
+		})
+
+		this.elements.accountList.addEventListener("dragover", (e) => {
+			this.handleDragOver(e)
+		})
+
+		this.elements.accountList.addEventListener("drop", (e) => {
+			this.handleDrop(e)
+		})
+
+		this.elements.accountList.addEventListener("dragend", (e) => {
+			this.handleDragEnd(e)
 		})
 
 		this.elements.addAccountBtn.addEventListener("click", () => {
@@ -118,7 +137,7 @@ class ChatGPTSwitcher {
 				return `
 				<li class="account slide-up" data-index="${index}" style="animation-delay: ${
 					index * 0.1
-				}s">
+				}s" draggable="true">
 					<div class="account-info">
 						<div class="account-avatar">
 							${avatarHTML}
@@ -158,6 +177,92 @@ class ChatGPTSwitcher {
 		}
 	}
 
+	handleDragStart(event) {
+		const accountElement = event.target.closest(".account")
+		if (!accountElement) return
+
+		this.draggedElement = accountElement
+		this.draggedIndex = parseInt(accountElement.dataset.index)
+
+		accountElement.style.opacity = "0.8"
+
+		event.dataTransfer.effectAllowed = "move"
+		event.dataTransfer.setData("text/html", accountElement.outerHTML)
+	}
+
+	handleDragOver(event) {
+		event.preventDefault()
+		event.dataTransfer.dropEffect = "move"
+
+		const targetElement = event.target.closest(".account")
+		if (!targetElement || targetElement === this.draggedElement) return
+
+		const targetIndex = parseInt(targetElement.dataset.index)
+
+		if (targetIndex !== this.draggedIndex) {
+			this.reorderElementsRealtime(this.draggedIndex, targetIndex)
+			this.draggedIndex = targetIndex
+		}
+	}
+
+	handleDrop(event) {
+		event.preventDefault()
+
+		const targetElement = event.target.closest(".account")
+		if (!targetElement || targetElement === this.draggedElement) return
+
+		this.saveReorderedAccounts()
+	}
+
+	handleDragEnd(event) {
+		if (this.draggedElement) {
+			this.draggedElement.style.opacity = ""
+		}
+
+		this.draggedElement = null
+		this.draggedIndex = null
+	}
+
+	reorderElementsRealtime(fromIndex, toIndex) {
+		const newAccounts = [...this.accounts]
+		const draggedAccount = newAccounts.splice(fromIndex, 1)[0]
+		newAccounts.splice(toIndex, 0, draggedAccount)
+		this.accounts = newAccounts
+
+		const accountList = this.elements.accountList
+		const allItems = Array.from(accountList.children)
+
+		const draggedItem = allItems[fromIndex]
+
+		if (toIndex === 0) {
+			accountList.insertBefore(draggedItem, allItems[0])
+		} else if (toIndex >= allItems.length - 1) {
+			accountList.appendChild(draggedItem)
+		} else {
+			const targetItem = allItems[toIndex]
+			if (fromIndex < toIndex) {
+				accountList.insertBefore(draggedItem, targetItem.nextSibling)
+			} else {
+				accountList.insertBefore(draggedItem, targetItem)
+			}
+		}
+
+		Array.from(accountList.children).forEach((item, index) => {
+			item.setAttribute("data-index", index)
+		})
+	}
+
+	async saveReorderedAccounts() {
+		try {
+			await saveAccounts(this.accounts)
+			showNotification("Account order updated!", "success")
+		} catch (error) {
+			console.error("Error saving reordered accounts:", error)
+			showNotification("Failed to save account order", "error")
+			await this.loadAccounts()
+		}
+	}
+
 	async addNewAccount() {
 		try {
 			showLoading()
@@ -175,11 +280,9 @@ class ChatGPTSwitcher {
 			)
 
 			if (existingAccountIndex !== -1) {
-				// Update existing account
 				this.accounts[existingAccountIndex].sessionToken = sessionToken
 				showNotification("Account updated successfully!", "success")
 			} else {
-				// Add new account
 				this.accounts.push({ username, fullName, avatar, sessionToken })
 				showNotification("Account added successfully!", "success")
 			}
