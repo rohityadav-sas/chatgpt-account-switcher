@@ -434,13 +434,12 @@ body {
 	background: var(--border-light);
 }
 
-/* Animation Classes */
 .fade-in {
-	animation: fadeIn 0.3s ease-out;
+	animation: fadeIn 0.2s ease-out;
 }
 
 .slide-up {
-	animation: slideUp 0.3s ease-out;
+	animation: slideUp 0.2s ease-out;
 }
 
 @keyframes fadeIn {
@@ -475,7 +474,7 @@ body {
 	border-radius: var(--radius);
 	font-size: 14px;
 	font-weight: 500;
-	animation: slideIn 0.3s ease-out;
+	animation: slideIn 0.2s ease-out;
 	z-index: 2000;
 	display: flex;
 	align-items: center;
