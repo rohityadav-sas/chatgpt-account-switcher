@@ -100,9 +100,8 @@ class ChatGPTSwitcherBackground {
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
 		const currentTab = tabs[0]
 
-		if (currentTab?.url?.includes("chatgpt.com")) {
-			await chrome.tabs.reload(currentTab.id)
-		} else if (
+		if (
+			currentTab?.url?.includes("chatgpt.com") ||
 			currentTab?.url?.includes("newtab") ||
 			currentTab?.url?.startsWith("chrome://")
 		) {

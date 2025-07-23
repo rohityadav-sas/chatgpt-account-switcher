@@ -370,7 +370,7 @@ class ChatGPTSwitcher {
 					`Switching to ${this.extractUsername(account.username)}!`,
 					"success"
 				)
-				setTimeout(() => window.close(), 1000)
+				setTimeout(() => window.close(), 750)
 			} else {
 				throw new Error("Failed to switch account")
 			}
