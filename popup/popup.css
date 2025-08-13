@@ -41,17 +41,20 @@ body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
 	width: 380px;
-	min-height: 500px;
+	height: 500px;
 	background: var(--bg-primary);
 	color: var(--text-primary);
 	position: relative;
 	overflow: hidden;
+	margin: 0;
+	padding: 0;
 }
 
 .popup-container {
 	display: flex;
 	flex-direction: column;
-	min-height: 500px;
+	justify-content: space-between;
+	height: 500px;
 }
 
 .header {
@@ -109,12 +112,20 @@ body {
 
 .main-content {
 	flex: 1;
-	padding: 20px;
-	overflow-y: auto;
+	padding: 5px 20px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	max-height: calc(
+		500px - 80px - 80px
+	); /* Total height minus header and footer */
 }
 
 .account-section {
-	height: 100%;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
 }
 
 .section-header {
@@ -143,7 +154,9 @@ body {
 
 .account-list-container {
 	position: relative;
-	min-height: 300px;
+	flex: 1;
+	overflow-y: auto;
+	min-height: 0; /* Allow flex item to shrink below content size */
 }
 
 .account-list {
@@ -344,7 +357,7 @@ body {
 
 .primary-btn {
 	width: 100%;
-	height: 44px;
+	height: 36px;
 	background: var(--primary);
 	color: white;
 	border: none;
@@ -357,6 +370,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
+	padding: 22px;
 }
 
 .primary-btn:hover {
@@ -424,6 +438,24 @@ body {
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
+	background: var(--border-light);
+}
+
+.account-list-container::-webkit-scrollbar {
+	width: 6px;
+}
+
+.account-list-container::-webkit-scrollbar-track {
+	background: transparent;
+	margin: 4px 0;
+}
+
+.account-list-container::-webkit-scrollbar-thumb {
+	background: var(--border);
+	border-radius: 3px;
+}
+
+.account-list-container::-webkit-scrollbar-thumb:hover {
 	background: var(--border-light);
 }
 

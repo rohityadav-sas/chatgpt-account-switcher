@@ -23,6 +23,7 @@ class ChatGPTSwitcher {
 		this.accounts = []
 		this.draggedElement = null
 		this.draggedIndex = null
+		this.isInitialLoad = true
 		this.init()
 	}
 
@@ -74,6 +75,7 @@ class ChatGPTSwitcher {
 		})
 
 		this.elements.refreshBtn.addEventListener("click", () => {
+			this.isInitialLoad = false // Set flag to false for refresh
 			this.loadAccounts()
 		})
 
@@ -136,8 +138,8 @@ class ChatGPTSwitcher {
 
 				return `
 				<li class="account slide-up" data-index="${index}" style="animation-delay: ${
-					index * 0.1
-				}s" draggable="true">
+					this.isInitialLoad ? "0s" : index * 0.1 + "s"
+				}" draggable="true">
 					<div class="account-info">
 						<div class="account-avatar">
 							${avatarHTML}
