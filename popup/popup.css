@@ -157,6 +157,7 @@ body {
 	flex: 1;
 	overflow-y: auto;
 	min-height: 0; /* Allow flex item to shrink below content size */
+	scroll-behavior: smooth;
 }
 
 .account-list {
@@ -177,7 +178,9 @@ body {
 	transition: var(--transition);
 	position: relative;
 	overflow: hidden;
-	cursor: pointer;
+	cursor: grab;
+	user-select: none;
+	will-change: transform;
 }
 
 .account::before {
@@ -201,6 +204,61 @@ body {
 
 .account:hover::before {
 	opacity: 1;
+}
+
+/* Custom drag styles */
+.account:active {
+	cursor: grabbing;
+}
+
+.account.drop-target {
+	border-color: var(--primary);
+	background: var(--bg-hover);
+	transform: translateY(-2px) scale(1.02);
+	box-shadow: 0 6px 25px rgba(16, 185, 129, 0.25);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dragging-clone {
+	border-color: var(--primary);
+	border-width: 2px;
+	background: var(--bg-card);
+}
+
+.dragging-clone .account-actions {
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+/* Simplified transitions to prevent conflicts */
+.account:not(.dragging) {
+	transition: var(--transition);
+}
+
+.account.dragging {
+	opacity: 0.3 !important;
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+	transform: scale(0.95) !important;
+}
+
+.account.drop-target {
+	transition: var(--transition);
+}
+
+/* Add subtle pulse animation to drop targets */
+.account.drop-target::before {
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 0.8;
+	}
+	50% {
+		opacity: 1;
+	}
 }
 
 .account-info {
