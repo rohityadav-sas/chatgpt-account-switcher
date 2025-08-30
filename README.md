@@ -6,11 +6,15 @@
 
 <img src="https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension">
 <img src="https://img.shields.io/badge/Manifest-V3-FF6B35?style=for-the-badge" alt="Manifest V3">
-<img src="https://img.shields.io/badge/Version-2.0.0-00D9FF?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-1.0.0-00D9FF?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/chrome-web-store/users/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white&label=Users" alt="Chrome Web Store Users">
+<img src="https://img.shields.io/chrome-web-store/rating/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store Rating">
 
 ---
 
 **🎯 Seamlessly manage multiple ChatGPT accounts without the hassle of logging in and out repeatedly. Auto-detect your current account and switch between different OpenAI profiles in seconds.**
+
+[![Chrome Web Store](https://img.shields.io/badge/Available%20on-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
 
 [📥 Installation](#-installation) • [🎮 Usage](#-usage) • [✨ Features](#-features) • [🔧 Technical](#-technical-details) • [🐛 Troubleshooting](#-troubleshooting)
 
@@ -20,9 +24,22 @@
 
 ## 📥 Installation
 
-> **⚡ Quick Setup in 60 seconds**
+> **⚡ Easy Installation from Chrome Web Store**
 
-### 🎯 Download or clone this repository
+### 🎯 Method 1: Chrome Web Store (Recommended)
+
+[![Install from Chrome Web Store](https://img.shields.io/badge/Install%20from-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
+
+1. **🌐 Visit Chrome Web Store** → Click the button above or visit the [extension page](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
+2. **📥 Add to Chrome** → Click "Add to Chrome" button
+3. **✅ Confirm Installation** → Click "Add extension" in the popup
+4. **🎉 Ready to Use!** → Extension appears in your Chrome toolbar
+
+### 🔧 Method 2: Manual Installation (For Developers)
+
+<details>
+<summary><strong>🛠️ Developer Installation Steps</strong></summary>
+
 ```bash
 git clone https://github.com/rohityadav-sas/chatgpt-account-switcher.git
 ```
@@ -32,13 +49,14 @@ git clone https://github.com/rohityadav-sas/chatgpt-account-switcher.git
 3. **📁 Load Extension** → Click "Load unpacked" → Select the extension folder
 4. **✅ Done!** → Extension appears in your Chrome toolbar
 
+</details>
+
 ### 🛡️ Browser Compatibility
 
 | Browser | Support | Version |
 |---------|---------|---------|
 | ![Chrome](https://img.shields.io/badge/-Chrome-4285F4?style=flat&logo=googlechrome&logoColor=white) | ✅ Full Support | 88+ |
 | ![Edge](https://img.shields.io/badge/-Edge-0078D4?style=flat&logo=microsoftedge&logoColor=white) | ✅ Full Support | 88+ |
-| ![Firefox](https://img.shields.io/badge/-Firefox-FF7139?style=flat&logo=firefox&logoColor=white) | ❌ Not Compatible | Manifest V2 Only |
 
 ---
 
@@ -105,9 +123,11 @@ git clone https://github.com/rohityadav-sas/chatgpt-account-switcher.git
 | Action | Icon | Description |
 |--------|------|-------------|
 | **Delete Account** | 🗑️ | Remove account from saved list |
-| **Export Data** | 📤 | Backup your account list as JSON |
-| **Import Data** | 📥 | Restore accounts from backup file |
+| **Export Data** | 📤 | Backup your account list as JSON for cross-browser sync |
+| **Import Data** | 📥 | Restore accounts from backup file or sync from other browsers |
 | **Refresh List** | 🔄 | Reload and update account information |
+
+**💡 Pro Tip**: Use the export/import feature to sync your accounts across different Chromium-based browsers (Chrome, Edge, Brave, etc.)
 
 </details>
 
@@ -135,12 +155,13 @@ git clone https://github.com/rohityadav-sas/chatgpt-account-switcher.git
 </td>
 <td width="33%" align="center">
 
-### 📊 **Data Management**  
+### 📊 **Data Management & Sync**  
 ---
 📤 **Import/Export** - Backup & restore account lists  
+🔄 **Cross-Browser Sync** - Share accounts across Chromium browsers  
 📄 **JSON Format** - Standard format for portability  
 ✅ **Data Validation** - Ensures account integrity  
-📦 **Batch Operations** - Import multiple accounts  
+📦 **Batch Operations** - Import multiple accounts at once  
 
 </td>
 <td width="33%" align="center">
@@ -164,9 +185,11 @@ git clone https://github.com/rohityadav-sas/chatgpt-account-switcher.git
 + 🚀 Lightning-fast account switching (< 2 seconds)
 + 🎯 Clean, modern interface with dark theme
 + 📱 Responsive design works on all screen sizes  
-+ 🔔 Smart notifications for all actions
++ 🔔 Smart status updates and confirmations
 + 💫 Smooth animations and transitions
 + 🎮 Intuitive drag-and-drop file imports
++ 🔄 Cross-browser sync for Chromium-based browsers
++ 📦 Easy backup and restore functionality
 ```
 
 ---
@@ -194,7 +217,7 @@ chatgpt-account-switcher/
 ├── 📁 utils/
 │   ├── 💾 storage.js             # Local storage operations
 │   ├── 🍪 cookies.js             # Session cookie management
-│   └── 🎯 ui.js                  # UI helpers & notifications
+│   └── 🎯 ui.js                  # UI helpers & status updates
 └── 📁 icons/
     ├── 🎨 icon16.png             # Extension icons (16x16)
     ├── 🎨 icon48.png             # (48x48)  
@@ -217,9 +240,7 @@ chatgpt-account-switcher/
 {
   "activeTab": "Access current ChatGPT page",
   "storage": "Save accounts locally", 
-  "cookies": "Manage session cookies",
-  "notifications": "Show status updates",
-  "downloads": "Export account data"
+  "cookies": "Manage session cookies"
 }
 ```
 
@@ -255,6 +276,7 @@ chatgpt-account-switcher/
 | **Max Accounts** | `Unlimited` |
 | **File Support** | `JSON only` |
 | **Max File Size** | `5MB` |
+| **Browser Sync** | `Chromium-based browsers` |
 
 ---
 
@@ -331,7 +353,7 @@ chatgpt-account-switcher/
 ```
 
 **Still Having Issues?** 
-[🐛 Report a Bug](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues/new?template=bug_report.md) • [💡 Feature Request](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues/new?template=feature_request.md)
+[🐛 Report a Bug](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues/new?template=bug_report.md) • [💡 Feature Request](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues/new?template=feature_request.md) • [⭐ Rate on Chrome Web Store](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
 
 </details>
 

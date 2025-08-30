@@ -3,7 +3,7 @@
 	"name": "ChatGPT Account Switcher",
 	"version": "1.0.0",
 	"description": "Switch between ChatGPT accounts seamlessly with a single click",
-	"permissions": ["cookies", "storage", "activeTab", "downloads"],
+	"permissions": ["cookies", "storage", "activeTab"],
 	"host_permissions": ["https://chatgpt.com/*"],
 	"background": {
 		"service_worker": "background/background.js",
