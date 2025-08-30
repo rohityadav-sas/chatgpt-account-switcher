@@ -271,11 +271,9 @@ chatgpt-account-switcher/
 | Aspect | Details |
 |--------|---------|
 | **Manifest Version** | ![V3](https://img.shields.io/badge/V3-Latest-brightgreen) |
-| **Bundle Size** | `< 50KB` |
 | **Storage Type** | `chrome.storage.local` |
 | **Max Accounts** | `Unlimited` |
 | **File Support** | `JSON only` |
-| **Max File Size** | `5MB` |
 | **Browser Sync** | `Chromium-based browsers` |
 
 ---
