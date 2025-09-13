@@ -6,14 +6,12 @@
 	"permissions": ["cookies", "storage", "activeTab"],
 	"host_permissions": ["https://chatgpt.com/*"],
 	"background": {
-		"service_worker": "background/background.js",
-		"type": "module"
+		"service_worker": "background/background.js"
 	},
 	"content_scripts": [
 		{
 			"matches": ["https://chatgpt.com/*"],
-			"js": ["content/content.js"],
-			"run_at": "document_idle"
+			"js": ["content/content.js"]
 		}
 	],
 	"action": {
