@@ -5,7 +5,250 @@ class ChatGPTContentScript {
 
 	init() {
 		this.setupMessageListener()
-		this.observePageChanges()
+		this.initDeleteButton()
+	}
+
+	async waitForElement(selector, predicate) {
+		const el = Array.from(document.querySelectorAll(selector)).find(
+			predicate ?? (() => true)
+		)
+		if (el) return el
+
+		return new Promise((resolve) => {
+			const observer = new MutationObserver(() => {
+				const el = Array.from(document.querySelectorAll(selector)).find(
+					predicate ?? (() => true)
+				)
+				if (el) {
+					observer.disconnect()
+					resolve(el)
+				}
+			})
+			observer.observe(document.body, { childList: true, subtree: true })
+		})
+	}
+
+	showToast(message, type = "loading") {
+		const existingToast = document.querySelector("#bulk-delete-toast")
+		if (existingToast) {
+			existingToast.remove()
+		}
+
+		const toast = document.createElement("div")
+		toast.id = "bulk-delete-toast"
+
+		const icons = {
+			loading: "⏳",
+			success: "✅",
+			error: "❌",
+		}
+
+		const colors = {
+			loading: "#3b82f6",
+			success: "#10b981",
+			error: "#ef4444",
+		}
+
+		toast.style.cssText = `
+			position: fixed;
+			top: 16px;
+			right: 16px;
+			background: white;
+			border: 1px solid #e5e7eb;
+			border-left: 3px solid ${colors[type]};
+			border-radius: 8px;
+			padding: 10px 14px;
+			box-shadow: 0 4px 8px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+			z-index: 10001;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			max-width: 300px;
+			animation: slideInRight 0.3s ease-out;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		`
+
+		toast.innerHTML = `
+			<span style="font-size: 14px;">${icons[type]}</span>
+			<span style="color: #374151; font-weight: 500; font-size: 14px; white-space: nowrap;">${message}</span>
+		`
+
+		const toastStyle = document.createElement("style")
+		toastStyle.textContent = `
+			@keyframes slideInRight {
+				from { transform: translateX(100%); opacity: 0; }
+				to { transform: translateX(0); opacity: 1; }
+			}
+		`
+		document.head.appendChild(toastStyle)
+
+		document.body.appendChild(toast)
+
+		if (type !== "loading") {
+			setTimeout(() => {
+				if (toast.parentNode) {
+					toast.style.animation = "slideInRight 0.3s ease-out reverse"
+					setTimeout(() => {
+						toast.remove()
+						toastStyle.remove()
+					}, 300)
+				}
+			}, 3000)
+		}
+
+		return toast
+	}
+
+	async handleDeleteClick() {
+		try {
+			const loadingToast = this.showToast(
+				"Deleting all conversations...",
+				"loading"
+			)
+
+			window.location.hash = "settings/DataControls"
+
+			const deleteAllButton = await this.waitForElement(
+				"button",
+				(btn) => btn.innerText.trim() === "Delete all"
+			)
+			deleteAllButton.click()
+
+			const confirmButton = await this.waitForElement(
+				'button[data-testid="confirm-delete-all-chats-button"]'
+			)
+			confirmButton.click()
+
+			const closeButton = document.querySelector(
+				'button[data-testid="close-button"]'
+			)
+
+			closeButton?.click()
+
+			const ctrlShiftO = new KeyboardEvent("keydown", {
+				key: "o",
+				code: "KeyO",
+				ctrlKey: true,
+				shiftKey: true,
+				bubbles: true,
+			})
+
+			document.dispatchEvent(ctrlShiftO)
+
+			loadingToast.remove()
+			this.showToast("All conversations deleted successfully!", "success")
+
+			setTimeout(() => {
+				window.location.hash = ""
+			}, 1500)
+		} catch (err) {
+			console.error("Error deleting all chats:", err)
+
+			const loadingToast = document.querySelector("#bulk-delete-toast")
+			if (loadingToast) loadingToast.remove()
+
+			this.showToast(
+				"Failed to delete conversations. Please try again.",
+				"error"
+			)
+		}
+	}
+
+	createDeleteButton() {
+		const container = document.createElement("div")
+		container.id = "bulk-delete-container"
+		container.style.cssText = `
+			position: relative;
+			display: inline-flex;
+			align-items: center;
+		`
+
+		const button = document.createElement("button")
+		button.id = "persistent-delete-button"
+		button.title = "Delete all conversations"
+		button.innerHTML = `
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M4 7H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		`
+
+		button.style.cssText = `
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: 6px;
+			background: #f3f4f6;
+			color: #6b7280;
+			border: 1px solid #e5e7eb;
+			border-radius: 6px;
+			font-size: 14px;
+			font-weight: 500;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+			margin-left: 12px;
+		`
+
+		button.addEventListener("mouseenter", () => {
+			button.style.background = "#fef2f2"
+			button.style.color = "#ef4444"
+			button.style.borderColor = "#fecaca"
+			button.style.transform = "translateY(-1px)"
+			button.style.boxShadow = "0 2px 8px rgba(239, 68, 68, 0.15)"
+		})
+
+		button.addEventListener("mouseleave", () => {
+			button.style.background = "#f3f4f6"
+			button.style.color = "#6b7280"
+			button.style.borderColor = "#e5e7eb"
+			button.style.transform = "translateY(0)"
+			button.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)"
+		})
+
+		button.addEventListener("click", () => this.handleDeleteClick())
+		container.appendChild(button)
+
+		return container
+	}
+
+	async attachDeleteButton() {
+		try {
+			const historyElement = await this.waitForElement("#history")
+			const header = historyElement.querySelector("h2")
+			if (!header) return
+
+			header.style.cssText = `
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				width: 100%;
+			`
+
+			if (!document.querySelector("#bulk-delete-container")) {
+				const deleteButtonContainer = this.createDeleteButton()
+				header.appendChild(deleteButtonContainer)
+			}
+		} catch (error) {
+			console.error("Error attaching delete button:", error)
+		}
+	}
+
+	async initDeleteButton() {
+		try {
+			const historyElement = await this.waitForElement("#history")
+
+			const observer = new MutationObserver(() => this.attachDeleteButton())
+			observer.observe(historyElement, { childList: true, subtree: true })
+
+			this.attachDeleteButton()
+		} catch (error) {
+			console.error("Error initializing delete button:", error)
+		}
 	}
 
 	setupMessageListener() {
@@ -43,18 +286,7 @@ class ChatGPTContentScript {
 	async getUserEmail() {
 		const emailFromScript = this.extractEmailFromScripts()
 		if (emailFromScript) {
-			console.log("Email found in script:", emailFromScript)
 			return emailFromScript
-		}
-
-		const emailFromStorage = this.extractEmailFromStorage()
-		if (emailFromStorage) {
-			return emailFromStorage
-		}
-
-		const emailFromDOM = this.extractEmailFromDOM()
-		if (emailFromDOM) {
-			return emailFromDOM
 		}
 
 		return await this.waitForEmailToLoad()
@@ -79,135 +311,18 @@ class ChatGPTContentScript {
 	extractEmailFromScripts() {
 		try {
 			const scripts = document.querySelectorAll("script")
-
 			for (const script of scripts) {
-				const content = script.textContent || script.innerText
+				const content = script.textContent
 
-				if (!content || content.trim().length === 0) continue
+				if (!content) continue
 
-				const patterns = [
-					/["']email["']\s*:\s*["']([^"']+)["']/g,
-					/\\"email\\"\s*:\s*\\"([^"\\]+)\\"/g,
-					/email["']?\s*:\s*["']([^"']+)["']/g,
-					/"user":\s*{[^}]*"email"\s*:\s*"([^"]+)"/g,
-					/window\.__reactRouterContext[^}]*"email"\s*[,:]?\s*"([^"]+)"/gi,
-					/__NEXT_DATA__[^}]*"email"\s*[,:]?\s*"([^"]+)"/gi,
-					/"email"\s*[,:]?\s*"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"/g,
-					/email['"]\s*[,:]?\s*['"]\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s*['"]/g,
-				]
-
-				for (const pattern of patterns) {
-					const matches = content.matchAll(pattern)
-					for (const match of matches) {
-						const email = match[1]
-						if (this.isValidEmail(email)) {
-							console.log(
-								"Found email with pattern:",
-								pattern.source,
-								"Email:",
-								email
-							)
-							return email
-						}
-					}
-				}
-
-				const emailMatches = content.match(
-					/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g
-				)
-				if (emailMatches) {
-					for (const email of emailMatches) {
-						if (this.isValidEmail(email) && !this.isCommonTestEmail(email)) {
-							console.log("Found email with fallback search:", email)
-							return email
-						}
-					}
-				}
+				const pattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+				const matches = content.match(pattern)
+				if (matches) return matches[0]
 			}
 		} catch (error) {
 			console.error("Error extracting email from scripts:", error)
 		}
-
-		return null
-	}
-
-	extractEmailFromStorage() {
-		try {
-			for (let i = 0; i < localStorage.length; i++) {
-				const key = localStorage.key(i)
-				if (
-					key &&
-					(key.includes("user") ||
-						key.includes("auth") ||
-						key.includes("session"))
-				) {
-					try {
-						const value = localStorage.getItem(key)
-						const parsed = JSON.parse(value)
-						const email = this.findEmailInObject(parsed)
-						if (email) return email
-					} catch (e) {}
-				}
-			}
-
-			for (let i = 0; i < sessionStorage.length; i++) {
-				const key = sessionStorage.key(i)
-				if (
-					key &&
-					(key.includes("user") ||
-						key.includes("auth") ||
-						key.includes("session"))
-				) {
-					try {
-						const value = sessionStorage.getItem(key)
-						const parsed = JSON.parse(value)
-						const email = this.findEmailInObject(parsed)
-						if (email) return email
-					} catch (e) {}
-				}
-			}
-		} catch (error) {
-			console.error("Error extracting email from storage:", error)
-		}
-
-		return null
-	}
-
-	extractEmailFromDOM() {
-		try {
-			const selectors = [
-				'[data-testid="user-email"]',
-				'[aria-label*="email"]',
-				".user-email",
-				'[title*="@"]',
-				'span:contains("@")',
-				'div:contains("@")',
-			]
-
-			for (const selector of selectors) {
-				const elements = document.querySelectorAll(selector)
-				for (const element of elements) {
-					const text =
-						element.textContent ||
-						element.title ||
-						element.getAttribute("aria-label") ||
-						""
-					const email = this.extractEmailFromText(text)
-					if (email) return email
-				}
-			}
-
-			const allText = document.body.textContent || ""
-			const emailMatch = allText.match(
-				/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
-			)
-			if (emailMatch && this.isValidEmail(emailMatch[0])) {
-				return emailMatch[0]
-			}
-		} catch (error) {
-			console.error("Error extracting email from DOM:", error)
-		}
-
 		return null
 	}
 
@@ -216,10 +331,7 @@ class ChatGPTContentScript {
 			let totalWaitTime = 0
 
 			const checkForEmail = () => {
-				const email =
-					this.extractEmailFromScripts() ||
-					this.extractEmailFromStorage() ||
-					this.extractEmailFromDOM()
+				const email = this.extractEmailFromScripts()
 
 				if (email) {
 					resolve(email)
@@ -237,78 +349,6 @@ class ChatGPTContentScript {
 
 			checkForEmail()
 		})
-	}
-
-	findEmailInObject(obj) {
-		if (!obj || typeof obj !== "object") return null
-
-		if (obj.email && this.isValidEmail(obj.email)) {
-			return obj.email
-		}
-
-		for (const key in obj) {
-			if (key.toLowerCase().includes("email") && this.isValidEmail(obj[key])) {
-				return obj[key]
-			}
-
-			if (typeof obj[key] === "object") {
-				const nestedEmail = this.findEmailInObject(obj[key])
-				if (nestedEmail) return nestedEmail
-			}
-		}
-
-		return null
-	}
-
-	extractEmailFromText(text) {
-		if (!text) return null
-
-		const emailMatch = text.match(
-			/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
-		)
-		return emailMatch && this.isValidEmail(emailMatch[0]) ? emailMatch[0] : null
-	}
-
-	isValidEmail(email) {
-		if (!email || typeof email !== "string") return false
-
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		return emailRegex.test(email) && email.length > 3 && email.length < 256
-	}
-
-	isCommonTestEmail(email) {
-		if (!email) return false
-
-		const testEmailPatterns = [
-			/test@/i,
-			/example@/i,
-			/demo@/i,
-			/@example\./i,
-			/@test\./i,
-			/@demo\./i,
-			/noreply@/i,
-			/no-reply@/i,
-		]
-
-		return testEmailPatterns.some((pattern) => pattern.test(email))
-	}
-
-	observePageChanges() {
-		if (typeof MutationObserver !== "undefined") {
-			const observer = new MutationObserver((mutations) => {})
-
-			observer.observe(document.body, {
-				childList: true,
-				subtree: true,
-				attributes: false,
-			})
-
-			setTimeout(() => observer.disconnect(), 10000)
-		}
-	}
-
-	detectEmail() {
-		return this.getUserEmail()
 	}
 }
 

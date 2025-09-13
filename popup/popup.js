@@ -21,24 +21,7 @@ class ChatGPTSwitcher {
 		}
 
 		this.accounts = []
-		this.draggedElement = null
-		this.draggedIndex = null
-		this.potentialDropTarget = null
-		this.potentialDropIndex = null
-		this.isReordering = false
-		this.lastReorderTime = 0
-		this.updateTimeout = null
-		this.scrollInterval = null
 		this.isInitialLoad = true
-
-		// Custom drag state
-		this.isDragging = false
-		this.dragStartX = 0
-		this.dragStartY = 0
-		this.dragThreshold = 5
-		this.dragClone = null
-		this.dragOffset = { x: 0, y: 0 }
-
 		this.init()
 	}
 
@@ -52,17 +35,22 @@ class ChatGPTSwitcher {
 			this.handleAccountAction(e)
 		})
 
-		// Add custom drag and drop event listeners
-		this.elements.accountList.addEventListener("mousedown", (e) => {
-			this.handleMouseDown(e)
+		this.elements.accountList.addEventListener("dragstart", (e) => {
+			e.dataTransfer.setData("text/plain", e.target.dataset.index)
 		})
 
-		document.addEventListener("mousemove", (e) => {
-			this.handleMouseMove(e)
+		this.elements.accountList.addEventListener("dragover", (e) => {
+			e.preventDefault()
 		})
 
-		document.addEventListener("mouseup", (e) => {
-			this.handleMouseUp(e)
+		this.elements.accountList.addEventListener("drop", (e) => {
+			e.preventDefault()
+			const fromIndex = parseInt(e.dataTransfer.getData("text/plain"))
+			const toElement = e.target.closest(".account")
+			if (toElement) {
+				const toIndex = parseInt(toElement.dataset.index)
+				this.reorderAccounts(fromIndex, toIndex)
+			}
 		})
 
 		this.elements.addAccountBtn.addEventListener("click", () => {
@@ -148,7 +136,7 @@ class ChatGPTSwitcher {
 							.toUpperCase()}</div>`
 
 				return `
-				<li class="account slide-up" data-index="${index}" style="animation-delay: ${
+				<li class="account slide-up" data-index="${index}" draggable="true" style="animation-delay: ${
 					this.isInitialLoad ? "0s" : index * 0.1 + "s"
 				}">
 					<div class="account-info">
@@ -190,497 +178,16 @@ class ChatGPTSwitcher {
 		}
 	}
 
-	handleMouseDown(event) {
-		// Only start drag on left mouse button
-		if (event.button !== 0) return
-
-		const accountElement = event.target.closest(".account")
-		if (!accountElement) return
-
-		// Don't start drag if clicking on action buttons
-		if (event.target.closest(".action-btn")) return
-
-		// Store initial position and element
-		this.dragStartX = event.clientX
-		this.dragStartY = event.clientY
-		this.draggedElement = accountElement
-		this.draggedIndex = parseInt(accountElement.dataset.index)
-
-		// Prevent text selection while dragging
-		event.preventDefault()
-	}
-
-	handleMouseMove(event) {
-		if (!this.draggedElement) return
-
-		const deltaX = event.clientX - this.dragStartX
-		const deltaY = event.clientY - this.dragStartY
-		const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-
-		// Start dragging only after moving beyond threshold
-		if (!this.isDragging && distance > this.dragThreshold) {
-			this.startDrag(event)
-		}
-
-		if (this.isDragging) {
-			this.updateDragPosition(event)
-			this.updateDropTarget(event)
-		}
-	}
-
-	handleMouseUp(event) {
-		if (this.isDragging) {
-			this.endDrag()
-		} else if (this.draggedElement) {
-			// If we didn't start dragging, treat as click
-			this.handleAccountAction(event)
-		}
-
-		// Reset drag state
-		this.draggedElement = null
-		this.draggedIndex = null
-	}
-
-	startDrag(event) {
-		this.isDragging = true
-		this.lastReorderTime = 0 // Add debounce tracking
-		const rect = this.draggedElement.getBoundingClientRect()
-
-		// Create drag clone
-		this.dragClone = this.draggedElement.cloneNode(true)
-		this.dragClone.style.position = "fixed"
-		this.dragClone.style.top = rect.top + "px"
-		this.dragClone.style.left = rect.left + "px"
-		this.dragClone.style.width = rect.width + "px"
-		this.dragClone.style.height = rect.height + "px"
-		this.dragClone.style.pointerEvents = "none"
-		this.dragClone.style.zIndex = "1000"
-		this.dragClone.style.opacity = "0.95"
-		this.dragClone.style.transform = "scale(1.02)"
-		this.dragClone.style.transition =
-			"transform 0.2s ease, box-shadow 0.2s ease"
-		this.dragClone.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.15)"
-		this.dragClone.classList.add("dragging-clone")
-
-		// Calculate offset from mouse to element
-		this.dragOffset.x = event.clientX - rect.left
-		this.dragOffset.y = event.clientY - rect.top
-
-		document.body.appendChild(this.dragClone)
-
-		// Add smooth animation to clone after a brief delay
-		setTimeout(() => {
-			if (this.dragClone) {
-				this.dragClone.style.boxShadow = "0 12px 35px rgba(0, 0, 0, 0.25)"
-			}
-		}, 50)
-
-		// Style original element - keep visible but dimmed
-		this.draggedElement.style.transition = "all 0.2s ease"
-		this.draggedElement.style.opacity = "0.3"
-		this.draggedElement.style.transform = "scale(0.95)"
-		this.draggedElement.classList.add("dragging")
-
-		// Prevent body scroll during drag
-		document.body.style.userSelect = "none"
-	}
-
-	updateDragPosition(event) {
-		if (this.dragClone) {
-			// Add smooth movement with slight delay for natural feel
-			const newLeft = event.clientX - this.dragOffset.x
-			const newTop = event.clientY - this.dragOffset.y
-
-			this.dragClone.style.transition = "none" // Disable transition during active dragging
-			this.dragClone.style.left = newLeft + "px"
-			this.dragClone.style.top = newTop + "px"
-		}
-
-		// Handle auto-scrolling
-		this.handleAutoScroll(event)
-	}
-
-	handleAutoScroll(event) {
-		const accountsContainer = document.querySelector(".account-list-container")
-		if (!accountsContainer) return
-
-		const containerRect = accountsContainer.getBoundingClientRect()
-		const mouseY = event.clientY
-		const scrollThreshold = 40 // pixels from edge to trigger scroll
-		const scrollSpeed = 12 // pixels per scroll step - increased from 6 to 12
-
-		// Clear existing scroll interval
-		if (this.scrollInterval) {
-			clearInterval(this.scrollInterval)
-			this.scrollInterval = null
-		}
-
-		// Check if mouse is near top edge
-		if (
-			mouseY < containerRect.top + scrollThreshold &&
-			accountsContainer.scrollTop > 0
-		) {
-			this.scrollInterval = setInterval(() => {
-				const newScrollTop = Math.max(
-					0,
-					accountsContainer.scrollTop - scrollSpeed
-				)
-				accountsContainer.scrollTop = newScrollTop
-
-				// Stop scrolling if we've reached the top
-				if (newScrollTop === 0) {
-					clearInterval(this.scrollInterval)
-					this.scrollInterval = null
-				}
-			}, 16) // ~60fps
-		}
-		// Check if mouse is near bottom edge
-		else if (mouseY > containerRect.bottom - scrollThreshold) {
-			const maxScroll =
-				accountsContainer.scrollHeight - accountsContainer.clientHeight
-			if (accountsContainer.scrollTop < maxScroll) {
-				this.scrollInterval = setInterval(() => {
-					const newScrollTop = Math.min(
-						maxScroll,
-						accountsContainer.scrollTop + scrollSpeed
-					)
-					accountsContainer.scrollTop = newScrollTop
-
-					// Stop scrolling if we've reached the bottom
-					if (newScrollTop === maxScroll) {
-						clearInterval(this.scrollInterval)
-						this.scrollInterval = null
-					}
-				}, 16) // ~60fps
-			}
-		}
-	}
-
-	updateDropTarget(event) {
-		// Debounce rapid updates to prevent glitching
-		if (this.updateTimeout) {
-			clearTimeout(this.updateTimeout)
-		}
-
-		this.updateTimeout = setTimeout(() => {
-			this.performDropTargetUpdate(event)
-		}, 16) // ~60fps
-	}
-
-	performDropTargetUpdate(event) {
-		// Get element under mouse (excluding the clone)
-		this.dragClone.style.pointerEvents = "none"
-		const elementBelow = document.elementFromPoint(event.clientX, event.clientY)
-		this.dragClone.style.pointerEvents = "none"
-
-		const targetElement = elementBelow?.closest(".account")
-
-		// Remove previous drop indicator
-		document.querySelectorAll(".account.drop-target").forEach((el) => {
-			el.classList.remove("drop-target")
-		})
-
-		// Perform real-time reordering with smooth animations
-		if (
-			targetElement &&
-			targetElement !== this.draggedElement &&
-			!targetElement.classList.contains("dragging")
-		) {
-			const targetRect = targetElement.getBoundingClientRect()
-			const mouseY = event.clientY
-			const targetIndex = parseInt(targetElement.dataset.index)
-
-			// Check if mouse has crossed 25% of the element
-			const shouldReorder = this.shouldHighlightTarget(
-				mouseY,
-				targetRect,
-				targetIndex
-			)
-
-			if (shouldReorder && targetIndex !== this.draggedIndex) {
-				// Prevent rapid reordering
-				const now = Date.now()
-				if (!this.lastReorderTime || now - this.lastReorderTime > 100) {
-					targetElement.classList.add("drop-target")
-
-					// Perform smooth real-time reordering
-					this.reorderElementsSmoothly(this.draggedIndex, targetIndex)
-					this.draggedIndex = targetIndex
-					this.lastReorderTime = now
-				}
-			} else if (shouldReorder) {
-				// Show visual feedback
-				targetElement.classList.add("drop-target")
-			}
-		}
-	}
-
-	shouldHighlightTarget(mouseY, targetRect, targetIndex) {
-		const threshold = targetRect.height * 0.25 // 25% of element height
-
-		if (targetIndex > this.draggedIndex) {
-			// Moving down: mouse must cross 25% into the target element
-			return mouseY > targetRect.top + threshold
-		} else {
-			// Moving up: mouse must cross 25% into the target element from bottom
-			return mouseY < targetRect.bottom - threshold
-		}
-	}
-
-	reorderElementsSmoothly(fromIndex, toIndex) {
-		// Prevent overlapping animations
-		if (this.isReordering) return
-		this.isReordering = true
+	reorderAccounts(fromIndex, toIndex) {
+		if (fromIndex === toIndex) return
 
 		const newAccounts = [...this.accounts]
-		const draggedAccount = newAccounts.splice(fromIndex, 1)[0]
+		const [draggedAccount] = newAccounts.splice(fromIndex, 1)
 		newAccounts.splice(toIndex, 0, draggedAccount)
+
 		this.accounts = newAccounts
-
-		const accountList = this.elements.accountList
-		const allItems = Array.from(accountList.children)
-
-		// Store current positions for smooth animation (only for non-dragging elements)
-		const positions = new Map()
-		allItems.forEach((item) => {
-			if (!item.classList.contains("dragging")) {
-				const rect = item.getBoundingClientRect()
-				positions.set(item, rect.top)
-			}
-		})
-
-		const draggedItem = allItems[fromIndex]
-
-		// Temporarily disable all transitions to prevent flicker
-		allItems.forEach((item) => {
-			if (!item.classList.contains("dragging")) {
-				item.style.transition = "none"
-			}
-		})
-
-		// Perform DOM reordering
-		if (toIndex === 0) {
-			accountList.insertBefore(draggedItem, allItems[0])
-		} else if (toIndex >= allItems.length - 1) {
-			accountList.appendChild(draggedItem)
-		} else {
-			const targetItem = allItems[toIndex]
-			if (fromIndex < toIndex) {
-				accountList.insertBefore(draggedItem, targetItem.nextSibling)
-			} else {
-				accountList.insertBefore(draggedItem, targetItem)
-			}
-		}
-
-		// Update data-index attributes
-		Array.from(accountList.children).forEach((item, index) => {
-			item.setAttribute("data-index", index)
-		})
-
-		// Keep dragged element styled appropriately
-		draggedItem.style.opacity = "0.3"
-		draggedItem.style.transform = "scale(0.95)"
-		draggedItem.classList.add("dragging")
-
-		// Apply smooth animations only to elements that actually moved
-		requestAnimationFrame(() => {
-			const newItems = Array.from(accountList.children)
-			newItems.forEach((item) => {
-				if (!item.classList.contains("dragging")) {
-					const oldTop = positions.get(item)
-					if (oldTop !== undefined) {
-						const newRect = item.getBoundingClientRect()
-						const deltaY = oldTop - newRect.top
-
-						if (Math.abs(deltaY) > 2) {
-							// Start from old position
-							item.style.transform = `translateY(${deltaY}px)`
-							item.style.transition = "none"
-
-							// Force layout
-							item.offsetHeight
-
-							// Animate to new position
-							requestAnimationFrame(() => {
-								item.style.transition =
-									"transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
-								item.style.transform = "translateY(0)"
-
-								// Clean up after animation
-								setTimeout(() => {
-									if (item.style.transform === "translateY(0px)") {
-										item.style.transition = ""
-										item.style.transform = ""
-									}
-								}, 250)
-							})
-						} else {
-							// Re-enable normal transitions for elements that didn't move
-							item.style.transition = ""
-						}
-					}
-				}
-			})
-
-			// Reset reordering flag
-			setTimeout(() => {
-				this.isReordering = false
-			}, 250)
-		})
-	}
-
-	shouldTriggerReorder(mouseY, targetRect, targetIndex) {
-		const now = Date.now()
-		const timeSinceLastReorder = now - this.lastReorderTime
-
-		// Debounce rapid reordering (minimum 150ms between reorders)
-		if (timeSinceLastReorder < 150) {
-			return false
-		}
-
-		const threshold = targetRect.height * 0.5 // 50% of element height for balanced crossing
-
-		let shouldReorder = false
-
-		if (targetIndex > this.draggedIndex) {
-			// Moving down: mouse must cross 50% into the target element
-			shouldReorder = mouseY > targetRect.top + threshold
-		} else {
-			// Moving up: mouse must cross 50% into the target element from bottom
-			shouldReorder = mouseY < targetRect.bottom - threshold
-		}
-
-		if (shouldReorder) {
-			this.lastReorderTime = now
-		}
-
-		return shouldReorder
-	}
-
-	endDrag() {
-		this.isDragging = false
-		this.isReordering = false
-
-		// Clear any pending updates and scroll intervals
-		if (this.updateTimeout) {
-			clearTimeout(this.updateTimeout)
-			this.updateTimeout = null
-		}
-
-		if (this.scrollInterval) {
-			clearInterval(this.scrollInterval)
-			this.scrollInterval = null
-		}
-
-		// Animate clone before removal
-		if (this.dragClone) {
-			this.dragClone.style.transition =
-				"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-			this.dragClone.style.opacity = "0"
-			this.dragClone.style.transform = "scale(0.8)"
-
-			// Remove clone after animation
-			setTimeout(() => {
-				if (this.dragClone) {
-					this.dragClone.remove()
-					this.dragClone = null
-				}
-			}, 300)
-		}
-
-		// Reset original element style with smooth animation
-		if (this.draggedElement) {
-			this.draggedElement.style.transition =
-				"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-			this.draggedElement.style.opacity = ""
-			this.draggedElement.style.transform = ""
-			this.draggedElement.classList.remove("dragging")
-		}
-
-		// Remove drop indicators with fade out
-		document.querySelectorAll(".account.drop-target").forEach((el) => {
-			el.style.transition = "all 0.3s ease"
-			el.classList.remove("drop-target")
-		})
-
-		// Re-enable body scroll
-		document.body.style.userSelect = ""
-
-		// Save the new order
+		this.renderAccounts()
 		this.saveReorderedAccounts()
-	}
-
-	reorderElementsRealtime(fromIndex, toIndex) {
-		const newAccounts = [...this.accounts]
-		const draggedAccount = newAccounts.splice(fromIndex, 1)[0]
-		newAccounts.splice(toIndex, 0, draggedAccount)
-		this.accounts = newAccounts
-
-		const accountList = this.elements.accountList
-		const allItems = Array.from(accountList.children)
-
-		// Store current positions to calculate movement
-		const positions = new Map()
-		allItems.forEach((item) => {
-			if (!item.classList.contains("dragging")) {
-				const rect = item.getBoundingClientRect()
-				positions.set(item, rect.top)
-			}
-		})
-
-		const draggedItem = allItems[fromIndex]
-
-		// Perform DOM reordering
-		if (toIndex === 0) {
-			accountList.insertBefore(draggedItem, allItems[0])
-		} else if (toIndex >= allItems.length - 1) {
-			accountList.appendChild(draggedItem)
-		} else {
-			const targetItem = allItems[toIndex]
-			if (fromIndex < toIndex) {
-				accountList.insertBefore(draggedItem, targetItem.nextSibling)
-			} else {
-				accountList.insertBefore(draggedItem, targetItem)
-			}
-		}
-
-		// Update data-index attributes
-		Array.from(accountList.children).forEach((item, index) => {
-			item.setAttribute("data-index", index)
-		})
-
-		// Keep the dragged element completely hidden after reordering
-		draggedItem.style.opacity = "0"
-		draggedItem.style.transform = "scale(0.8)"
-		draggedItem.style.height = "0px"
-		draggedItem.style.margin = "0px"
-		draggedItem.style.padding = "0px"
-		draggedItem.classList.add("dragging")
-
-		// Apply smooth transitions for non-dragged elements
-		const newItems = Array.from(accountList.children)
-		newItems.forEach((item) => {
-			if (!item.classList.contains("dragging")) {
-				const oldTop = positions.get(item)
-				if (oldTop !== undefined) {
-					const newRect = item.getBoundingClientRect()
-					const deltaY = oldTop - newRect.top
-
-					if (Math.abs(deltaY) > 2) {
-						// Start from old position
-						item.style.transform = `translateY(${deltaY}px)`
-						item.style.transition = "none"
-
-						// Animate to new position
-						requestAnimationFrame(() => {
-							item.style.transition =
-								"transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
-							item.style.transform = "translateY(0)"
-						})
-					}
-				}
-			}
-		})
 	}
 
 	async saveReorderedAccounts() {
@@ -1002,62 +509,17 @@ class ChatGPTSwitcher {
 	}
 
 	async validateImportData(jsonString) {
-		let data
-
-		try {
-			data = JSON.parse(jsonString)
-		} catch (error) {
-			throw new Error("Invalid JSON format")
-		}
-
-		if (!Array.isArray(data)) {
+		const data = JSON.parse(jsonString)
+		if (!Array.isArray(data) || data.length === 0) {
 			throw new Error("File must contain an array of accounts")
 		}
 
-		if (data.length === 0) {
-			throw new Error("No accounts found in the file")
-		}
-
-		const validAccounts = []
-		const errors = []
-
-		data.forEach((account, index) => {
-			if (!account || typeof account !== "object") {
-				errors.push(`Account ${index + 1}: Invalid account object`)
-				return
-			}
-
-			if (!account.username || typeof account.username !== "string") {
-				errors.push(`Account ${index + 1}: Missing or invalid username`)
-				return
-			}
-
-			if (!account.sessionToken || typeof account.sessionToken !== "string") {
-				errors.push(`Account ${index + 1}: Missing or invalid session token`)
-				return
-			}
-
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-			if (!emailRegex.test(account.username)) {
-				errors.push(`Account ${index + 1}: Invalid email format`)
-				return
-			}
-
-			validAccounts.push({
-				username: account.username.trim(),
-				fullName: account.fullName || null,
-				avatar: account.avatar || null,
-				sessionToken: account.sessionToken.trim(),
-			})
-		})
-
-		if (errors.length > 0) {
-			throw new Error(
-				`Validation errors:\n${errors.slice(0, 5).join("\n")}${
-					errors.length > 5 ? "\n...and more" : ""
-				}`
-			)
-		}
+		const validAccounts = data.filter(
+			(account) =>
+				account?.username &&
+				account?.sessionToken &&
+				/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account.username)
+		)
 
 		if (validAccounts.length === 0) {
 			throw new Error("No valid accounts found")

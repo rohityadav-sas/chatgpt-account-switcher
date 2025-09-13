@@ -4,17 +4,9 @@ class ChatGPTSwitcherBackground {
 	}
 
 	init() {
-		this.setupEventListeners()
-	}
-
-	setupEventListeners() {
 		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			this.handleMessage(message, sender, sendResponse)
 			return true
-		})
-
-		chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-			this.handleTabUpdate(tabId, changeInfo, tab)
 		})
 	}
 
@@ -35,12 +27,6 @@ class ChatGPTSwitcherBackground {
 		} catch (error) {
 			console.error("Message handling failed:", error)
 			sendResponse({ success: false, error: error.message })
-		}
-	}
-
-	handleTabUpdate(tabId, changeInfo, tab) {
-		if (changeInfo.status === "complete" && tab.url?.includes("chatgpt.com")) {
-			console.log("ChatGPT tab loaded:", tabId)
 		}
 	}
 
