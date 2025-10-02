@@ -218,9 +218,12 @@ class ChatGPTContentScript {
 
 	async attachDeleteButton() {
 		try {
-			const historyElement = await this.waitForElement("#history")
-			const header = historyElement.querySelector("h2")
+			const historyElement = await this.waitForElement(".__menu-label")
+			const header = historyElement?.parentElement
 			if (!header) return
+
+			const existingSvg = header.querySelector("svg")
+			if (existingSvg) existingSvg.remove()
 
 			header.style.cssText = `
 				display: flex;
@@ -240,7 +243,7 @@ class ChatGPTContentScript {
 
 	async initDeleteButton() {
 		try {
-			const historyElement = await this.waitForElement("#history")
+			const historyElement = await this.waitForElement(".__menu-label")
 
 			const observer = new MutationObserver(() => this.attachDeleteButton())
 			observer.observe(historyElement, { childList: true, subtree: true })
