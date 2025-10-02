@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "ChatGPT Account Switcher",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Switch between ChatGPT accounts seamlessly with a single click",
 	"permissions": ["cookies", "storage", "activeTab"],
 	"host_permissions": ["https://chatgpt.com/*"],
