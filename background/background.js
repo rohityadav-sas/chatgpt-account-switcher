@@ -45,7 +45,7 @@ class ChatGPTSwitcherBackground {
 				domain: ".chatgpt.com",
 				path: "/",
 				secure: true,
-				sameSite: "no_restriction",
+				sameSite: "no_restriction"
 			})
 
 			await this.navigateToChatGPT()
