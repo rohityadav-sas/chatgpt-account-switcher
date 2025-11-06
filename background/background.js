@@ -1,5 +1,6 @@
 class ChatGPTSwitcherBackground {
 	constructor() {
+		this.domain = "chatgpt.com"
 		this.init()
 	}
 
@@ -13,13 +14,9 @@ class ChatGPTSwitcherBackground {
 	async handleMessage(message, sender, sendResponse) {
 		try {
 			switch (message.action) {
-				case "setCookie":
-					const success = await this.setCookieAndNavigate(message)
+				case "switchAccount":
+					const success = await this.switchAccount(message.accountData)
 					sendResponse({ success })
-					break
-				case "getCookies":
-					const cookies = await this.getChatGPTCookies()
-					sendResponse({ cookies })
 					break
 				default:
 					sendResponse({ error: "Unknown action" })
@@ -30,49 +27,105 @@ class ChatGPTSwitcherBackground {
 		}
 	}
 
-	async setCookieAndNavigate(message) {
+	async switchAccount(accountData) {
 		try {
-			const { username, sessionToken } = message
+			const { username, cookies, storages } = accountData
 
-			if (!sessionToken) {
-				throw new Error("No session token provided")
+			if (!cookies || !storages) {
+				throw new Error("No account data provided")
 			}
 
-			await this.setCookie({
-				url: "https://chatgpt.com",
-				name: "__Secure-next-auth.session-token",
-				value: sessionToken,
-				domain: ".chatgpt.com",
-				path: "/",
-				secure: true,
-				sameSite: "no_restriction"
+			// Get the active tab
+			const [tab] = await chrome.tabs.query({
+				active: true,
+				currentWindow: true
 			})
 
-			await this.navigateToChatGPT()
+			if (!tab?.url?.includes(this.domain)) {
+				throw new Error(`Please navigate to ${this.domain} first`)
+			}
+
+			// Remove all existing cookies
+			const existingCookies = await this.getChatGPTCookies()
+			await Promise.all(
+				existingCookies.map((cookie) =>
+					this.removeCookie(cookie.name, cookie.path)
+				)
+			)
+
+			// Set all new cookies
+			await Promise.all(cookies.map((cookie) => this.setCookie(cookie)))
+
+			// Restore localStorage and sessionStorage
+			await this.restoreStorages(tab.id, storages)
+
+			// Reload the page
+			await chrome.tabs.reload(tab.id)
 
 			console.log("Successfully switched to account:", username)
 			return true
 		} catch (error) {
-			console.error("Failed to set cookie and navigate:", error)
+			console.error("Failed to switch account:", error)
 			throw error
 		}
 	}
 
-	async setCookie(cookieDetails) {
+	async setCookie(cookie) {
 		return new Promise((resolve, reject) => {
-			chrome.cookies.set(cookieDetails, (cookie) => {
+			const cookieDetails = {
+				url: `https://${this.domain}${cookie.path}`,
+				name: cookie.name,
+				value: cookie.value,
+				path: cookie.path,
+				secure: cookie.secure,
+				httpOnly: cookie.httpOnly,
+				sameSite: cookie.sameSite || "no_restriction"
+			}
+
+			// Add expiration if it exists
+			if (cookie.expirationDate) {
+				cookieDetails.expirationDate = cookie.expirationDate
+			}
+
+			// Handle domain based on cookie type
+			if (!cookie.name.startsWith("__Host-")) {
+				cookieDetails.domain = cookie.domain
+			} else {
+				cookieDetails.path = "/"
+				cookieDetails.secure = true
+			}
+
+			chrome.cookies.set(cookieDetails, (result) => {
 				if (chrome.runtime.lastError) {
-					reject(new Error(chrome.runtime.lastError.message))
+					console.warn(
+						`Failed to set cookie ${cookie.name}:`,
+						chrome.runtime.lastError.message
+					)
+					resolve(null) // Continue even if one cookie fails
 				} else {
-					resolve(cookie)
+					resolve(result)
 				}
 			})
 		})
 	}
 
+	async removeCookie(name, path) {
+		return new Promise((resolve) => {
+			chrome.cookies.remove(
+				{
+					url: `https://${this.domain}${path}`,
+					name: name
+				},
+				() => {
+					resolve()
+				}
+			)
+		})
+	}
+
 	async getChatGPTCookies() {
 		return new Promise((resolve, reject) => {
-			chrome.cookies.getAll({ domain: ".chatgpt.com" }, (cookies) => {
+			chrome.cookies.getAll({ domain: this.domain }, (cookies) => {
 				if (chrome.runtime.lastError) {
 					reject(new Error(chrome.runtime.lastError.message))
 				} else {
@@ -82,19 +135,30 @@ class ChatGPTSwitcherBackground {
 		})
 	}
 
-	async navigateToChatGPT() {
-		const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
-		const currentTab = tabs[0]
+	async restoreStorages(tabId, storages) {
+		return chrome.scripting.executeScript({
+			target: { tabId },
+			func: (storageData) => {
+				// Clear existing storage
+				localStorage.clear()
+				sessionStorage.clear()
 
-		if (
-			currentTab?.url?.includes("chatgpt.com") ||
-			currentTab?.url?.includes("newtab") ||
-			currentTab?.url?.startsWith("chrome://")
-		) {
-			await chrome.tabs.update(currentTab.id, { url: "https://chatgpt.com" })
-		} else {
-			await chrome.tabs.create({ url: "https://chatgpt.com" })
-		}
+				// Restore localStorage
+				if (storageData.local) {
+					Object.entries(storageData.local).forEach(([key, value]) => {
+						localStorage.setItem(key, value)
+					})
+				}
+
+				// Restore sessionStorage
+				if (storageData.session) {
+					Object.entries(storageData.session).forEach(([key, value]) => {
+						sessionStorage.setItem(key, value)
+					})
+				}
+			},
+			args: [storages]
+		})
 	}
 }
 

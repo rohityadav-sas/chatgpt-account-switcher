@@ -17,7 +17,7 @@ class ChatGPTSwitcher {
 			confirmationTitle: document.getElementById("confirmationTitle"),
 			confirmationMessage: document.getElementById("confirmationMessage"),
 			confirmationCancel: document.getElementById("confirmationCancel"),
-			confirmationConfirm: document.getElementById("confirmationConfirm"),
+			confirmationConfirm: document.getElementById("confirmationConfirm")
 		}
 
 		this.accounts = []
@@ -205,10 +205,10 @@ class ChatGPTSwitcher {
 		try {
 			showLoading()
 
-			const { username, fullName, sessionToken, avatar } =
+			const { username, fullName, avatar, cookies, storages } =
 				await this.getCurrentAccountInfo()
 
-			if (!username || !sessionToken) {
+			if (!username || !cookies || cookies.length === 0) {
 				showNotification("Please log in to ChatGPT first", "error")
 				return
 			}
@@ -218,10 +218,13 @@ class ChatGPTSwitcher {
 			)
 
 			if (existingAccountIndex !== -1) {
-				this.accounts[existingAccountIndex].sessionToken = sessionToken
+				this.accounts[existingAccountIndex].cookies = cookies
+				this.accounts[existingAccountIndex].storages = storages
+				this.accounts[existingAccountIndex].fullName = fullName
+				this.accounts[existingAccountIndex].avatar = avatar
 				showNotification("Account updated successfully!", "success")
 			} else {
-				this.accounts.push({ username, fullName, avatar, sessionToken })
+				this.accounts.push({ username, fullName, avatar, cookies, storages })
 				showNotification("Account added successfully!", "success")
 			}
 
@@ -273,20 +276,32 @@ class ChatGPTSwitcher {
 			)
 		})
 
-		const cookies = await chrome.cookies.getAll({ domain: ".chatgpt.com" })
-		const sessionCookie = cookies.find(
-			(cookie) => cookie.name === "__Secure-next-auth.session-token"
-		)
+		// Get all cookies for chatgpt.com domain
+		const cookies = await chrome.cookies.getAll({ domain: "chatgpt.com" })
 
-		if (!sessionCookie) {
-			throw new Error("No session token found")
+		if (!cookies || cookies.length === 0) {
+			throw new Error(
+				"No cookies found. Please make sure you're logged in to ChatGPT."
+			)
 		}
+
+		// Get localStorage and sessionStorage from the page
+		const storages = await chrome.scripting
+			.executeScript({
+				target: { tabId: activeTab.id },
+				func: () => ({
+					local: { ...localStorage },
+					session: { ...sessionStorage }
+				})
+			})
+			.then(([result]) => result.result)
 
 		return {
 			username,
 			fullName,
 			avatar,
-			sessionToken: sessionCookie.value,
+			cookies,
+			storages
 		}
 	}
 
@@ -298,9 +313,12 @@ class ChatGPTSwitcher {
 			if (!account) throw new Error("Account not found")
 
 			const success = await chrome.runtime.sendMessage({
-				action: "setCookie",
-				username: account.username,
-				sessionToken: account.sessionToken,
+				action: "switchAccount",
+				accountData: {
+					username: account.username,
+					cookies: account.cookies,
+					storages: account.storages
+				}
 			})
 
 			if (success) {
@@ -425,11 +443,12 @@ class ChatGPTSwitcher {
 				username: account.username,
 				fullName: account.fullName || null,
 				avatar: account.avatar || null,
-				sessionToken: account.sessionToken,
+				cookies: account.cookies,
+				storages: account.storages
 			}))
 
 			const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-				type: "application/json",
+				type: "application/json"
 			})
 
 			const url = URL.createObjectURL(blob)
@@ -517,7 +536,9 @@ class ChatGPTSwitcher {
 		const validAccounts = data.filter(
 			(account) =>
 				account?.username &&
-				account?.sessionToken &&
+				account?.cookies &&
+				Array.isArray(account.cookies) &&
+				account.cookies.length > 0 &&
 				/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account.username)
 		)
 
@@ -647,7 +668,7 @@ class ChatGPTSwitcher {
 				return {
 					imported: newAccounts.length,
 					added: newAccounts.length,
-					updated: 0,
+					updated: 0
 				}
 			} else {
 				const accountMap = new Map()
@@ -673,7 +694,7 @@ class ChatGPTSwitcher {
 				return {
 					imported: newAccounts.length,
 					added,
-					updated,
+					updated
 				}
 			}
 		} catch (error) {
