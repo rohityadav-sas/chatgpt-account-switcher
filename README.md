@@ -15,7 +15,7 @@
 
 [![Chrome Web Store](https://img.shields.io/badge/Available%20on-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
 
-[📥 Installation](#-installation) • [🎮 Usage](#-usage) • [✨ Features](#-features) • [🐛 Troubleshooting](#-troubleshooting)
+[📥 Installation](#-installation) • [🎮 Usage](#-usage) • [✨ Features](#-features) • [🐛 Report a problem](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues)
 
 </div>
 
@@ -39,7 +39,7 @@
 
 Open [ChatGPT](https://chatgpt.com), sign in, then open the extension and click **Add Current Account**.
 
-To save another account, click **Add New Account**, sign in, then click **Add Current Account** again. Save your current account first.
+To save another account, click **Add New Account**, sign in, then click **Add Current Account** again. Save your current account first. **Use Add New Account instead of ChatGPT’s Log out button:** logging out can invalidate the sign-in you saved.
 
 </td>
 <td width="50%" valign="top">
@@ -64,16 +64,6 @@ Complete any two-step verification when signing in. Keep two-step authentication
 - 💻 Keep saved account data in your browser.
 
 **Keep backups private:** they contain sign-in information.
-
----
-
-## 🐛 Troubleshooting
-
-- **Cannot save?** Finish signing in to ChatGPT, refresh the page, and try again.
-- **Session expired?** Sign in again and click **Add Current Account** to update the saved account.
-- **Still stuck?** [Report a problem](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues) with the error message and steps you followed. Never share passwords, verification codes, or backups.
-
----
 
 <div align="center">
 
