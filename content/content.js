@@ -1,3 +1,4 @@
+{
 class ChatGPTContentScript {
 	constructor() {
 		this.init()
@@ -196,6 +197,15 @@ class ChatGPTContentScript {
 	}
 
 	async getUserEmail() {
+        try {
+            const response = await fetch('/api/auth/session', { credentials: 'include', signal: AbortSignal.timeout(5000) })
+            if (response.ok) {
+                const session = await response.json()
+                if (session.user?.email) return session.user.email
+            }
+        } catch (error) {
+            console.warn('Session lookup unavailable; trying page data')
+        }
 		const emailFromScript = this.extractEmailFromScripts()
 		if (emailFromScript) {
 			return emailFromScript
@@ -264,8 +274,12 @@ class ChatGPTContentScript {
 	}
 }
 
+if (!window.chatGPTSwitcher) {
 const chatGPTContentScript = new ChatGPTContentScript()
 
 if (typeof window !== "undefined") {
 	window.chatGPTSwitcher = chatGPTContentScript
+}
+
+}
 }

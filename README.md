@@ -6,7 +6,7 @@
 
 <img src="https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension">
 <img src="https://img.shields.io/badge/Manifest-V3-FF6B35?style=for-the-badge" alt="Manifest V3">
-<img src="https://img.shields.io/badge/Version-1.0.0-00D9FF?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-1.2.2-00D9FF?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/chrome-web-store/users/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white&label=Users" alt="Chrome Web Store Users">
 <img src="https://img.shields.io/chrome-web-store/rating/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store Rating">
 
@@ -21,6 +21,26 @@
 </div>
 
 ---
+
+## Version 1.2.2 repair and verification
+
+This source update incorporates the ZIP contributed in [issue #4](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues/4), plus session-based email detection, safe content-script reinjection, cookie domain/store/partition preservation, and explicit switching errors.
+
+- **Add Current Account** saves the signed-in account.
+- **Add New Account** clears the current ChatGPT browser session and opens normal login. Save your current account first. Previously saved extension accounts are retained.
+- Complete login, including any two-step challenge, before saving an account. Keep two-step authentication enabled. This extension restores a saved session; it cannot bypass login challenges or renew expired sessions.
+- Stored accounts and exported JSON contain sensitive session cookies. Keep backups private.
+
+Automated verification: run `node --test tests/regression.cjs`. These tests use mocked Chrome APIs and do not confirm live ChatGPT acceptance of restored sessions. Live account switching and two-step authentication remain unverified.
+
+### Manual verification
+
+1. Load this repository with **Load unpacked** at `chrome://extensions/` (or reload the existing unpacked extension). Reload ChatGPT too. This GitHub update does not update the Chrome Web Store listing.
+2. Sign in to account A, complete any two-step challenge, and choose **Add Current Account**. Check the saved email.
+3. Choose **Add New Account**, confirm, sign in to account B, and save it.
+4. Switch A → B → A. Check the actual profile email and conversation list each time, including a two-step-enabled account.
+5. Repeat with a ChatGPT tab opened before extension reload; the popup should recover its missing content-script connection.
+6. If ChatGPT asks for login, authenticate normally and re-save that account. Report the visible error and reproduction steps without sharing cookies or exported account JSON.
 
 ## 📥 Installation
 

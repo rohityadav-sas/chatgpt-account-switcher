@@ -407,6 +407,12 @@ body {
 }
 
 /* Footer */
+.footer-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
 .footer {
 	padding: 16px 20px;
 	border-top: 1px solid var(--border);
@@ -442,6 +448,38 @@ body {
 }
 
 .primary-btn svg {
+	flex-shrink: 0;
+}
+
+.new-account-btn {
+	width: 100%;
+	height: 36px;
+	background: transparent;
+	color: var(--primary);
+	border: 1px solid var(--primary);
+	border-radius: var(--radius-lg);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: var(--transition);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 0 12px;
+}
+
+.new-account-btn:hover {
+	background: rgba(16, 185, 129, 0.12);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-lg);
+}
+
+.new-account-btn:active {
+	transform: translateY(0);
+}
+
+.new-account-btn svg {
 	flex-shrink: 0;
 }
 

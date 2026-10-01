@@ -11,7 +11,6 @@
 
 <body>
 	<div class="popup-container">
-		<!-- Header -->
 		<header class="header">
 			<div class="header-content">
 				<div class="logo">
@@ -65,7 +64,6 @@
 			</div>
 		</header>
 
-		<!-- Account List -->
 		<main class="main-content">
 			<div class="account-section">
 				<div class="section-header">
@@ -87,19 +85,27 @@
 			</div>
 		</main>
 
-		<!-- Footer -->
 		<footer class="footer">
-			<button id="addAccountBtn" class="primary-btn">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-						stroke-linejoin="round" />
-				</svg>
-				Add Current Account
-			</button>
+			<div class="footer-actions">
+				<button id="addAccountBtn" class="primary-btn">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+							stroke-linejoin="round" />
+					</svg>
+					Add Current Account
+				</button>
+				<button id="newAccountBtn" class="new-account-btn" title="Clear the current ChatGPT session and open the login page">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M15 21V19C15 17.8954 14.1046 17 13 17H5C3.89543 17 3 17.8954 3 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+						<path d="M19 8V14M16 11H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+					</svg>
+					Add New Account
+				</button>
+			</div>
 		</footer>
 	</div>
 
-	<!-- Loading Overlay -->
 	<div class="loading-overlay" id="loadingOverlay">
 		<div class="loading-spinner">
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,10 +116,8 @@
 		</div>
 	</div>
 
-	<!-- Hidden file input for import -->
 	<input type="file" id="importFileInput" accept=".json" style="display: none;">
 
-	<!-- Custom Confirmation Dialog -->
 	<div class="confirmation-overlay" id="confirmationOverlay">
 		<div class="confirmation-dialog">
 			<div class="confirmation-header">

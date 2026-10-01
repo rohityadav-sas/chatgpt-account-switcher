@@ -6,6 +6,7 @@ class ChatGPTSwitcher {
 		this.elements = {
 			accountList: document.getElementById("accountList"),
 			addAccountBtn: document.getElementById("addAccountBtn"),
+			newAccountBtn: document.getElementById("newAccountBtn"),
 			exportBtn: document.getElementById("exportBtn"),
 			importBtn: document.getElementById("importBtn"),
 			importFileInput: document.getElementById("importFileInput"),
@@ -57,6 +58,10 @@ class ChatGPTSwitcher {
 			this.addNewAccount()
 		})
 
+		this.elements.newAccountBtn.addEventListener("click", () => {
+			this.startNewAccount()
+		})
+
 		this.elements.exportBtn.addEventListener("click", () => {
 			this.exportAccounts()
 		})
@@ -74,7 +79,7 @@ class ChatGPTSwitcher {
 		})
 
 		this.elements.refreshBtn.addEventListener("click", () => {
-			this.isInitialLoad = false // Set flag to false for refresh
+			this.isInitialLoad = false
 			this.loadAccounts()
 		})
 
@@ -201,6 +206,33 @@ class ChatGPTSwitcher {
 		}
 	}
 
+	async startNewAccount() {
+		this.showConfirmation(
+			"Add New Account",
+			"This will clear the current ChatGPT session on this browser and open the ChatGPT login page. Saved accounts in this extension will not be deleted.",
+			async () => {
+				try {
+					showLoading()
+
+					const response = await chrome.runtime.sendMessage({
+						action: "addNewAccount"
+					})
+
+					if (!response?.success) {
+						throw new Error(response?.error || "Failed to start a new account session")
+					}
+
+					window.close()
+				} catch (error) {
+					console.error("Error starting a new account session:", error)
+					showNotification(error.message || "Failed to start a new account session", "error")
+				} finally {
+					hideLoading()
+				}
+			}
+		)
+	}
+
 	async addNewAccount() {
 		try {
 			showLoading()
@@ -237,46 +269,76 @@ class ChatGPTSwitcher {
 		}
 	}
 
+	async sendContentMessage(tabId, message, responseKey) {
+		const send = () =>
+			new Promise((resolve, reject) => {
+				chrome.tabs.sendMessage(tabId, message, (response) => {
+					const lastError = chrome.runtime.lastError
+					if (lastError) {
+						reject(new Error(lastError.message))
+						return
+					}
+					resolve(response?.[responseKey] || "")
+				})
+			})
+
+		try {
+			return await send()
+		} catch (error) {
+			const messageText = String(error?.message || error)
+			const hasNoReceiver = messageText.includes(
+				"Receiving end does not exist"
+			)
+
+			if (!hasNoReceiver) throw error
+
+			await chrome.scripting.executeScript({
+				target: { tabId },
+				files: ["content/content.js"]
+			})
+
+			return await send()
+		}
+	}
+
 	async getCurrentAccountInfo() {
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
 		const activeTab = tabs[0]
 
-		if (!activeTab?.url?.includes("chatgpt.com")) {
+		if (!activeTab?.id || !/^https:\/\/(?:[a-z0-9-]+\.)*chatgpt\.com(?:\/|$)/i.test(activeTab?.url || "")) {
 			showNotification("Please navigate to ChatGPT first", "error")
 			throw new Error("Please navigate to ChatGPT first")
 		}
 
-		const username = await new Promise((resolve) => {
-			chrome.tabs.sendMessage(
+		let username
+		let fullName
+		let avatar
+
+		try {
+			username = await this.sendContentMessage(
 				activeTab.id,
 				{ action: "getUsername" },
-				(response) => {
-					resolve(response?.email || "")
-				}
+				"email"
 			)
-		})
 
-		const fullName = await new Promise((resolve) => {
-			chrome.tabs.sendMessage(
+			fullName = await this.sendContentMessage(
 				activeTab.id,
 				{ action: "getFullName" },
-				(response) => {
-					resolve(response?.fullName || "")
-				}
+				"fullName"
 			)
-		})
 
-		const avatar = await new Promise((resolve) => {
-			chrome.tabs.sendMessage(
+			avatar = await this.sendContentMessage(
 				activeTab.id,
 				{ action: "getAvatar" },
-				(response) => {
-					resolve(response?.avatar || "")
-				}
+				"avatar"
 			)
-		})
+		} catch (error) {
+			console.error("Unable to communicate with ChatGPT tab:", error)
+			throw new Error(
+				"Could not connect to the ChatGPT page. Please reload ChatGPT and try again."
+			)
+		}
 
-		// Get all cookies for chatgpt.com domain
 		const cookies = await chrome.cookies.getAll({ domain: "chatgpt.com" })
 
 		if (!cookies || cookies.length === 0) {
@@ -285,7 +347,6 @@ class ChatGPTSwitcher {
 			)
 		}
 
-		// Get localStorage and sessionStorage from the page
 		const storages = await chrome.scripting
 			.executeScript({
 				target: { tabId: activeTab.id },
@@ -312,7 +373,7 @@ class ChatGPTSwitcher {
 			const account = this.accounts[index]
 			if (!account) throw new Error("Account not found")
 
-			const success = await chrome.runtime.sendMessage({
+			const response = await chrome.runtime.sendMessage({
 				action: "switchAccount",
 				accountData: {
 					username: account.username,
@@ -321,18 +382,18 @@ class ChatGPTSwitcher {
 				}
 			})
 
-			if (success) {
+			if (response?.success) {
 				showNotification(
 					`Switching to ${this.extractUsername(account.username)}!`,
 					"success"
 				)
 				setTimeout(() => window.close(), 750)
 			} else {
-				throw new Error("Failed to switch account")
+				throw new Error(response?.error || "Failed to switch account")
 			}
 		} catch (error) {
 			console.error("Error switching account:", error)
-			showNotification("Failed to switch account", "error")
+			showNotification(error.message || "Failed to switch account", "error")
 		} finally {
 			hideLoading()
 		}
@@ -345,7 +406,6 @@ class ChatGPTSwitcher {
 
 			const username = this.extractUsername(account.username)
 
-			// Show custom confirmation dialog
 			this.showConfirmation(
 				`Delete Account`,
 				`Are you sure you want to delete "${username}"? This action cannot be undone.`,

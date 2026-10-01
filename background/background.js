@@ -14,10 +14,16 @@ class ChatGPTSwitcherBackground {
 	async handleMessage(message, sender, sendResponse) {
 		try {
 			switch (message.action) {
-				case "switchAccount":
+				case "switchAccount": {
 					const success = await this.switchAccount(message.accountData)
 					sendResponse({ success })
 					break
+				}
+				case "addNewAccount": {
+					const result = await this.addNewAccount()
+					sendResponse(result)
+					break
+				}
 				default:
 					sendResponse({ error: "Unknown action" })
 			}
@@ -27,11 +33,105 @@ class ChatGPTSwitcherBackground {
 		}
 	}
 
+	async addNewAccount() {
+		const loginUrl = "https://chatgpt.com/auth/login"
+
+		try {
+			// Remove only cookies belonging to chatgpt.com / its subdomains.
+			// Saved accounts in chrome.storage.local are intentionally untouched.
+			const allCookies = await new Promise((resolve, reject) => {
+				chrome.cookies.getAll({}, (cookies) => {
+					const lastError = chrome.runtime.lastError
+					if (lastError) {
+						reject(new Error(lastError.message))
+						return
+					}
+					resolve(cookies || [])
+				})
+			})
+
+			const chatGPTCookies = allCookies.filter((cookie) => {
+				const domain = String(cookie.domain || "").toLowerCase().replace(/^\./, "")
+				return domain === "chatgpt.com" || domain.endsWith(".chatgpt.com")
+			})
+
+			await Promise.all(
+				chatGPTCookies.map((cookie) => this.removeCookieObject(cookie))
+			)
+
+			const [activeTab] = await chrome.tabs.query({
+				active: true,
+				currentWindow: true
+			})
+
+			const activeUrl = activeTab?.url || ""
+			const isChatGPTTab = /^(https?:\/\/)([^/]+\.)?chatgpt\.com(?:\/|$)/i.test(activeUrl)
+
+			if (isChatGPTTab && activeTab?.id) {
+				// Remove page storage as well, so a previous account cannot be restored
+				// from localStorage/sessionStorage after the cookies are deleted.
+				try {
+					await chrome.scripting.executeScript({
+						target: { tabId: activeTab.id },
+						func: () => {
+							try { localStorage.clear() } catch {}
+							try { sessionStorage.clear() } catch {}
+						}
+					})
+				} catch (error) {
+					console.warn("Could not clear ChatGPT page storage:", error)
+				}
+
+				await chrome.tabs.update(activeTab.id, { url: loginUrl })
+			} else {
+				await chrome.tabs.create({ url: loginUrl, active: true })
+			}
+
+			console.log(`Cleared ${chatGPTCookies.length} ChatGPT cookies and opened login`)
+			return {
+				success: true,
+				removedCookies: chatGPTCookies.length
+			}
+		} catch (error) {
+			console.error("Failed to start a new ChatGPT account session:", error)
+			throw error
+		}
+	}
+
+	async removeCookieObject(cookie) {
+		return new Promise((resolve, reject) => {
+			const domain = String(cookie.domain || "").replace(/^\./, "")
+			const scheme = cookie.secure ? "https" : "http"
+			const url = `${scheme}://${domain}${cookie.path || "/"}`
+
+			const details = {
+				url,
+				name: cookie.name
+			}
+
+			if (cookie.storeId) {
+				details.storeId = cookie.storeId
+			}
+
+			if (cookie.partitionKey) details.partitionKey = cookie.partitionKey
+
+			chrome.cookies.remove(details, () => {
+				// Read runtime.lastError so Chromium does not emit an unchecked
+				// runtime.lastError warning for cookies that cannot be removed.
+				if (chrome.runtime.lastError) {
+					reject(new Error(`Could not remove cookie ${cookie.name}: ${chrome.runtime.lastError.message}`))
+					return
+				}
+				resolve()
+			})
+		})
+	}
+
 	async switchAccount(accountData) {
 		try {
 			const { username, cookies, storages } = accountData
 
-			if (!cookies || !storages) {
+			if (!Array.isArray(cookies) || cookies.length === 0 || !storages) {
 				throw new Error("No account data provided")
 			}
 
@@ -41,7 +141,7 @@ class ChatGPTSwitcherBackground {
 				currentWindow: true
 			})
 
-			if (!tab?.url?.includes(this.domain)) {
+			if (!/^https:\/\/(?:[a-z0-9-]+\.)*chatgpt\.com(?:\/|$)/i.test(tab?.url || "")) {
 				throw new Error(`Please navigate to ${this.domain} first`)
 			}
 
@@ -49,7 +149,7 @@ class ChatGPTSwitcherBackground {
 			const existingCookies = await this.getChatGPTCookies()
 			await Promise.all(
 				existingCookies.map((cookie) =>
-					this.removeCookie(cookie.name, cookie.path)
+					this.removeCookieObject(cookie)
 				)
 			)
 
@@ -73,7 +173,7 @@ class ChatGPTSwitcherBackground {
 	async setCookie(cookie) {
 		return new Promise((resolve, reject) => {
 			const cookieDetails = {
-				url: `https://${this.domain}${cookie.path}`,
+				url: `https://${String(cookie.domain || this.domain).replace(/^\./, "")}${cookie.path || "/"}`,
 				name: cookie.name,
 				value: cookie.value,
 				path: cookie.path,
@@ -82,15 +182,18 @@ class ChatGPTSwitcherBackground {
 				sameSite: cookie.sameSite || "no_restriction"
 			}
 
+			if (cookie.storeId) cookieDetails.storeId = cookie.storeId
+			if (cookie.partitionKey) cookieDetails.partitionKey = cookie.partitionKey
+
 			// Add expiration if it exists
 			if (cookie.expirationDate) {
 				cookieDetails.expirationDate = cookie.expirationDate
 			}
 
 			// Handle domain based on cookie type
-			if (!cookie.name.startsWith("__Host-")) {
+			if (!cookie.hostOnly && !cookie.name.startsWith("__Host-")) {
 				cookieDetails.domain = cookie.domain
-			} else {
+			} else if (cookie.name.startsWith("__Host-")) {
 				cookieDetails.path = "/"
 				cookieDetails.secure = true
 			}
@@ -101,25 +204,12 @@ class ChatGPTSwitcherBackground {
 						`Failed to set cookie ${cookie.name}:`,
 						chrome.runtime.lastError.message
 					)
-					resolve(null) // Continue even if one cookie fails
+					reject(new Error(`Failed to restore cookie ${cookie.name}: ${chrome.runtime.lastError.message}`))
 				} else {
-					resolve(result)
+					if (!result) reject(new Error(`Failed to restore cookie ${cookie.name}`))
+					else resolve(result)
 				}
 			})
-		})
-	}
-
-	async removeCookie(name, path) {
-		return new Promise((resolve) => {
-			chrome.cookies.remove(
-				{
-					url: `https://${this.domain}${path}`,
-					name: name
-				},
-				() => {
-					resolve()
-				}
-			)
 		})
 	}
 
