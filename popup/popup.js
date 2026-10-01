@@ -315,11 +315,11 @@ class ChatGPTSwitcher {
 		let avatar
 
 		try {
-			username = await this.sendContentMessage(
-				activeTab.id,
-				{ action: "getUsername" },
-				"email"
-			)
+			const session = await chrome.runtime.sendMessage({ action: 'getSession', tabId: activeTab.id })
+            if (!session?.success || !session.email) {
+                throw new Error(session?.error || 'Please finish signing in to ChatGPT before saving this account.')
+            }
+            username = session.email
 
 			fullName = await this.sendContentMessage(
 				activeTab.id,
@@ -335,7 +335,7 @@ class ChatGPTSwitcher {
 		} catch (error) {
 			console.error("Unable to communicate with ChatGPT tab:", error)
 			throw new Error(
-				"Could not connect to the ChatGPT page. Please reload ChatGPT and try again."
+				error.message || "Could not connect to the ChatGPT page. Please reload ChatGPT and try again."
 			)
 		}
 

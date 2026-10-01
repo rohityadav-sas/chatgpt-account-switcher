@@ -19,7 +19,11 @@ function background(options = {}) {
       update: async (id, data) => calls.update.push(data),
       create: async data => calls.update.push(data)
     },
-    scripting: { executeScript: async data => calls.scripts.push(data) }
+    scripting: { executeScript: async data => {
+      calls.scripts.push(data)
+      if (String(data.func).includes('/api/auth/session')) return [{ result: { email: options.sessionEmail === undefined ? account.username : options.sessionEmail } }]
+      return [{ result: { local: {}, session: {} } }]
+    } }
   }
   const context = vm.createContext({ chrome, console })
   vm.runInContext(fs.readFileSync(path.join(root, 'background/background.js'), 'utf8') + '\nglobalThis.instance = chatGPTSwitcherBackground', context)
@@ -32,7 +36,7 @@ test('switch restores host-only cookies, storage, and reloads', async () => {
   assert.equal(await instance.switchAccount(account), true)
   assert.equal(calls.set[0].domain, undefined)
   assert.equal(calls.set[0].storeId, '0')
-  assert.equal(calls.scripts.length, 1)
+  assert.equal(calls.scripts.length, 3)
   assert.equal(calls.reload.length, 1)
 })
 test('cookie errors are reported and prevent a success reload', async () => {
@@ -75,4 +79,17 @@ test('popup shows background errors instead of claiming success', async () => {
 test('manifest references existing scripts, popup, and icons', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json')))
   for (const file of [manifest.background.service_worker, manifest.action.default_popup, ...Object.values(manifest.icons), ...manifest.content_scripts.flatMap(s => s.js)]) assert.ok(fs.existsSync(path.join(root, file)), file)
+})
+
+test('rejected saved sessions restore previous cookies and do not reload', async () => {
+  const previous = { ...cookie, value: 'previous-test-only' }
+  const { instance, calls } = background({ cookies: [previous], sessionEmail: null })
+  await assert.rejects(instance.switchAccount(account), /did not accept/)
+  assert.equal(calls.reload.length, 0)
+  assert.equal(calls.set.at(-1).value, 'previous-test-only')
+})
+test('wrong account sessions are rejected rather than shown as success', async () => {
+  const { instance, calls } = background({ cookies: [cookie], sessionEmail: 'other@example.invalid' })
+  await assert.rejects(instance.switchAccount(account), /did not accept/)
+  assert.equal(calls.reload.length, 0)
 })

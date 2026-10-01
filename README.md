@@ -1,112 +1,87 @@
-# ChatGPT Account Switcher
+<div align="center">
 
-Save your ChatGPT accounts in your browser and click a saved account to switch to it.
+# 🚀 ChatGPT Account Switcher
 
-You sign in through ChatGPT as usual. The extension remembers your signed-in session, so you can use it again while that session remains valid. You may need to sign in again when ChatGPT asks you to.
+### ⚡ Save your ChatGPT accounts and switch from one place!
 
-## Install the latest version
+<img src="https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension">
+<img src="https://img.shields.io/badge/Manifest-V3-FF6B35?style=for-the-badge" alt="Manifest V3">
+<img src="https://img.shields.io/chrome-web-store/users/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white&label=Users" alt="Chrome Web Store Users">
+<img src="https://img.shields.io/chrome-web-store/rating/lfjcahfaebackjkicnpkdppmnbodbggh?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store Rating">
 
-Use Google Chrome or Microsoft Edge on a computer. You do not need to write code or install any developer tools.
+---
 
-1. On [this GitHub page](https://github.com/rohityadav-sas/chatgpt-account-switcher), click the green **Code** button, then **Download ZIP**.
-2. Open your Downloads folder. Right-click the downloaded file and choose **Extract All**, then **Extract**.
-3. Move the extracted folder somewhere you will keep it, such as your Desktop. Keep this folder after installation: the browser needs its files to run the extension.
-4. Open your browser's extension page:
-   - **Chrome:** type `chrome://extensions` into the address bar and press Enter.
-   - **Edge:** type `edge://extensions` into the address bar and press Enter.
-5. Turn on **Developer mode**. This setting lets you install the extension from the folder you downloaded.
-6. Click **Load unpacked**. Select the extracted folder that contains **manifest.json**. If you see another folder inside the one you opened, open it first and look for that file.
-7. Find **ChatGPT Account Switcher** on the extension page and make sure it is turned on.
-8. Click the puzzle-piece **Extensions** button near your browser's address bar. Pin ChatGPT Account Switcher, or choose the option to show it in the toolbar, so you can easily open it.
-9. Open [ChatGPT](https://chatgpt.com). If it was already open, refresh the page.
+**🎯 Save your signed-in ChatGPT accounts in your browser, then choose an account from the extension to switch to it.**
 
-If you already installed the extension from the Chrome Web Store, turn that copy off before using this downloaded version. The store version has not yet been updated with these fixes.
+[![Chrome Web Store](https://img.shields.io/badge/Available%20on-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh)
 
-## Save your first account
+[📥 Installation](#-installation) • [🎮 Usage](#-usage) • [✨ Features](#-features) • [🐛 Troubleshooting](#-troubleshooting)
 
-1. Open [ChatGPT](https://chatgpt.com) and sign in to the account you want to save.
-2. Finish every sign-in step, including the verification code if you use two-step authentication. Wait until you can use ChatGPT.
-3. Click the **ChatGPT Account Switcher** icon in your browser's toolbar.
-4. Click **Add Current Account**.
-5. Check that your account appears in the list with the correct email address.
+</div>
 
-## Add another account
+---
 
-**Save your current account first.** The next steps sign you out of the current ChatGPT session in this browser. Accounts already saved in the extension stay in its list.
+## 📥 Installation
 
-1. Open the extension and click **Add New Account**.
-2. Read the message and confirm. The ChatGPT sign-in page opens.
-3. Sign in to your other account and finish any verification steps.
-4. When ChatGPT is ready, open the extension again and click **Add Current Account**.
-5. Repeat these steps for each account you want to save.
+1. Open [ChatGPT Account Switcher in the Chrome Web Store](https://chromewebstore.google.com/detail/lfjcahfaebackjkicnpkdppmnbodbggh).
+2. Click **Add to Chrome**, then **Add extension**.
+3. Click the puzzle-piece **Extensions** button in your browser and pin the extension.
 
-**Add New Account** opens sign-in for another existing account. You can also follow ChatGPT's sign-up options if you want to create an account.
+---
 
-## Switch accounts
+## 🎮 Usage
 
-1. Keep a [ChatGPT](https://chatgpt.com) tab open and selected.
-2. Open the extension.
-3. Click the saved account you want to use.
-4. Wait for ChatGPT to reload, then check your profile to confirm you are using the right account.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-Switching changes the ChatGPT sign-in used by this browser profile. Other open ChatGPT tabs may need a refresh to show the change.
+### 1️⃣ Save an account
 
-## If something goes wrong
+Open [ChatGPT](https://chatgpt.com), sign in, then open the extension and click **Add Current Account**.
 
-### My account does not appear when I save it
+To save another account, click **Add New Account**, sign in, then click **Add Current Account** again. Save your current account first.
 
-Make sure you are signed in at **chatgpt.com** and can use ChatGPT. Refresh that page, then try **Add Current Account** again. If you have just installed or updated the extension, refresh the ChatGPT page before trying again.
+</td>
+<td width="50%" valign="top">
 
-### Switching asks me to sign in again
+### 2️⃣ Switch accounts
 
-Your saved sign-in may have expired. Sign in normally, complete any verification steps, then click **Add Current Account** again. Saving the same email address updates its existing entry.
+Keep your ChatGPT tab selected, open the extension, and click a saved account. Check your profile after the page reloads.
 
-### My account uses two-step authentication
+Complete any two-step verification when signing in. Keep two-step authentication enabled.
 
-Keep it enabled. Complete the verification step when signing in, then save the account. The extension does not skip verification or prevent ChatGPT from asking you to sign in again.
+</td>
+</tr>
+</table>
 
-### I see “Please navigate to ChatGPT first”
+---
 
-Open [ChatGPT](https://chatgpt.com), select that tab, and open the extension again.
+## ✨ Features
 
-### The extension will not install
+- 👥 Save and switch between multiple accounts.
+- 📤 Export and import account backups.
+- 🗑️ Remove saved accounts without deleting your ChatGPT accounts.
+- 💻 Keep saved account data in your browser.
 
-Extract the downloaded ZIP before choosing **Load unpacked**. Select the folder containing **manifest.json**, rather than the ZIP file or the folder above it.
+**Keep backups private:** they contain sign-in information.
 
-### It still does not work
+---
 
-Open a [GitHub issue](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues) and tell us which browser you use, what you clicked, and the error message you saw. Do not include your password, verification codes, or account backup file.
+## 🐛 Troubleshooting
 
-## Update an existing installation
+- **Cannot save?** Finish signing in to ChatGPT, refresh the page, and try again.
+- **Session expired?** Sign in again and click **Add Current Account** to update the saved account.
+- **Still stuck?** [Report a problem](https://github.com/rohityadav-sas/chatgpt-account-switcher/issues) with the error message and steps you followed. Never share passwords, verification codes, or backups.
 
-1. Download and extract the latest version using the installation steps above.
-2. Copy the files inside the newly extracted extension folder into the folder you originally installed. Choose **Replace** when asked.
-3. Open `chrome://extensions` or `edge://extensions`.
-4. Find **ChatGPT Account Switcher** and click its reload button (the circular arrow).
-5. Refresh your open ChatGPT tabs.
+---
 
-Keep the original installation folder and update its files in place. Removing the extension can remove its saved accounts.
+<div align="center">
 
-## Manage saved accounts
+**Made with ❤️ for the ChatGPT community**
 
-Hover over a toolbar icon in the extension to see its name.
+[⭐ Star on GitHub](https://github.com/rohityadav-sas/chatgpt-account-switcher) • [📄 ISC License](LICENSE)
 
-| Option | What it does |
-| --- | --- |
-| **Delete this account** | Removes that account from the extension's list. It does not delete your ChatGPT account. |
-| **Clear all accounts** | Removes every saved account from the extension after confirmation. It does not delete your ChatGPT accounts. |
-| **Refresh accounts** | Reloads the saved account list. |
-| **Export accounts** | Downloads a backup of your saved accounts. |
-| **Import accounts** | Lets you select a backup file previously exported by this extension. |
+![Footer](https://img.shields.io/badge/Built%20with-JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Footer](https://img.shields.io/badge/Powered%20by-Chrome%20Extensions-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)
 
-Treat an exported backup like a password: it contains sign-in information. Keep it private and never upload it to an issue or send it to someone else. Restoring a backup may still require you to sign in again if its saved sessions have expired.
-
-## Current version
-
-Version **1.2.2** improves account detection, reconnects to already-open ChatGPT pages, adds **Add New Account**, and shows switching errors more accurately.
-
-Automated checks pass. Switching between real signed-in accounts, including accounts with two-step authentication, still needs confirmation. After setup, try switching from your first account to your second and back, checking the profile each time.
-
-## License
-
-[ISC License](LICENSE).
+</div>

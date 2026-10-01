@@ -19,7 +19,12 @@ class ChatGPTSwitcherBackground {
 					sendResponse({ success })
 					break
 				}
-				case "addNewAccount": {
+				case "getSession": {
+                    const session = await this.readSession(message.tabId)
+                    sendResponse({ success: true, ...session })
+                    break
+                }
+                case "addNewAccount": {
 					const result = await this.addNewAccount()
 					sendResponse(result)
 					break
@@ -127,7 +132,38 @@ class ChatGPTSwitcherBackground {
 		})
 	}
 
-	async switchAccount(accountData) {
+	async readSession(tabId) {
+        const [result] = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: async () => {
+                try {
+                    const response = await fetch('/api/auth/session', {
+                        credentials: 'include', cache: 'no-store',
+                        signal: AbortSignal.timeout(10000)
+                    })
+                    if (!response.ok) return { error: 'ChatGPT could not verify this sign-in. Please try again.' }
+                    const session = await response.json()
+                    return { email: session.user?.email || null }
+                } catch {
+                    return { error: 'Could not check the ChatGPT sign-in. Check your connection and try again.' }
+                }
+            }
+        })
+        if (!result?.result) throw new Error('Could not check the ChatGPT sign-in. Reload ChatGPT and try again.')
+        if (result.result.error) throw new Error(result.result.error)
+        return result.result
+    }
+
+    async readStorages(tabId) {
+        const [result] = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: () => ({ local: { ...localStorage }, session: { ...sessionStorage } })
+        })
+        if (!result?.result) throw new Error('Could not read the current account data. Reload ChatGPT and try again.')
+        return result.result
+    }
+
+    async switchAccount(accountData) {
 		try {
 			const { username, cookies, storages } = accountData
 
@@ -145,22 +181,36 @@ class ChatGPTSwitcherBackground {
 				throw new Error(`Please navigate to ${this.domain} first`)
 			}
 
-			// Remove all existing cookies
-			const existingCookies = await this.getChatGPTCookies()
-			await Promise.all(
-				existingCookies.map((cookie) =>
-					this.removeCookieObject(cookie)
-				)
-			)
+			// Keep a rollback snapshot before changing the browser's sign-in.
+            const previousStorages = await this.readStorages(tab.id)
+            const existingCookies = await this.getChatGPTCookies()
+            try {
+			for (const cookie of existingCookies) await this.removeCookieObject(cookie)
 
 			// Set all new cookies
-			await Promise.all(cookies.map((cookie) => this.setCookie(cookie)))
+			for (const cookie of cookies) await this.setCookie(cookie)
 
 			// Restore localStorage and sessionStorage
 			await this.restoreStorages(tab.id, storages)
 
-			// Reload the page
-			await chrome.tabs.reload(tab.id)
+			// A browser accepting cookies does not mean ChatGPT accepts the session.
+            const session = await this.readSession(tab.id)
+            if (!session.email || session.email.toLowerCase() !== username.toLowerCase()) {
+                throw new Error('ChatGPT did not accept this saved sign-in. Sign in to this account again, then choose Add Current Account to update it.')
+            }
+            } catch (error) {
+                try {
+                    const changedCookies = await this.getChatGPTCookies()
+                    for (const cookie of changedCookies) await this.removeCookieObject(cookie)
+                    for (const cookie of existingCookies) await this.setCookie(cookie)
+                    await this.restoreStorages(tab.id, previousStorages)
+                } catch {
+                    throw new Error(error.message + ' The previous sign-in could not be restored; please sign in again.')
+                }
+                throw error
+            }
+
+            await chrome.tabs.reload(tab.id)
 
 			console.log("Successfully switched to account:", username)
 			return true
