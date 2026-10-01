@@ -40,8 +40,8 @@
 body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
-	width: 380px;
-	height: 500px;
+	width: 420px;
+	min-height: 320px;
 	background: var(--bg-primary);
 	color: var(--text-primary);
 	position: relative;
@@ -53,17 +53,18 @@ body {
 .popup-container {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
-	height: 500px;
+	min-height: 320px;
+	max-height: 580px;
 }
 
 .header {
 	background: var(--bg-secondary);
 	border-bottom: 1px solid var(--border);
-	padding: 16px 20px;
+	padding: 16px;
 }
 
 .header-content {
+	gap: 12px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -81,12 +82,14 @@ body {
 }
 
 .logo h1 {
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 600;
+	white-space: nowrap;
 	color: var(--text-primary);
 }
 
 .actions {
+	flex-shrink: 0;
 	display: flex;
 	gap: 4px;
 }
@@ -112,13 +115,12 @@ body {
 
 .main-content {
 	flex: 1;
-	padding: 5px 20px;
+	padding: 18px 16px;
+	min-height: 0;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	max-height: calc(
-		500px - 80px - 80px
-	); /* Total height minus header and footer */
+	max-height: 420px;
 }
 
 .account-section {
@@ -381,7 +383,7 @@ body {
 	justify-content: center;
 	text-align: center;
 	padding: 40px 20px;
-	height: 300px;
+	min-height: 180px;
 }
 
 .empty-state.hidden {
@@ -434,7 +436,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	padding: 22px;
+	padding: 0 12px;
 }
 
 .primary-btn:hover {
@@ -830,4 +832,26 @@ body {
 	background: var(--primary-dark);
 	transform: translateY(-1px);
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Keep both footer actions readable at browser zoom levels. */
+.footer-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.footer-actions button {
+    height: 42px;
+    padding: 0 14px;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+.account-email { color: var(--text-secondary); }
+.account-actions { flex-shrink: 0; }
+.account:focus-within .account-actions { opacity: 1; }
+button:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+.success-message, .error-message, .info-message, .warning-message {
+    left: 12px;
+    right: 12px;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
