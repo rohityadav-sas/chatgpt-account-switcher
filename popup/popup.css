@@ -834,14 +834,16 @@ body {
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
-/* Keep both footer actions readable at browser zoom levels. */
+/* Keep both footer actions aligned and readable. */
 .footer-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
 .footer-actions button {
     height: 42px;
-    padding: 0 14px;
+    padding: 0 8px;
+    gap: 6px;
+    font-size: 13px;
     white-space: nowrap;
     line-height: 1.2;
 }
